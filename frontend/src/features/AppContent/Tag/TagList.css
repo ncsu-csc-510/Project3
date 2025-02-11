@@ -1,0 +1,36 @@
+/*
+
+Copyright (C) 2022 SE CookBook - All Rights Reserved
+You may use, distribute and modify this code under the
+terms of the MIT license.
+You should have received a copy of the MIT license with
+this file. If not, please write to: help.cookbook@gmail.com
+
+*/
+
+.d-flex {
+  display: flex;
+}
+
+.flex-row {
+  flex-direction: row;
+}
+
+.supplemental-info {
+  margin-left: auto !important;
+  color: #34495e;
+}
+
+.MuiPaginationItem-root {
+  color: white !important;
+}
+
+.Mui-selected {
+  background-color: aliceblue !important;
+  color: #34495e !important;
+}
+
+.no-recipe-found{
+    color: white;
+    font-family: RobotoThin !important;
+}

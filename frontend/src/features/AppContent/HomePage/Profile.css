@@ -1,0 +1,30 @@
+/* Profile.css */
+
+.profile-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .profile-photo-container {
+    margin-bottom: 20px;
+  }
+  
+  .profile-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  
+  .profile-details p {
+    margin: 10px 0;
+  }
+  
+  .photo-upload input[type="file"] {
+    margin-bottom: 10px;
+  }

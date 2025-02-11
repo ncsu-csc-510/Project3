@@ -1,0 +1,194 @@
+<!--
+  
+Copyright (C) 2022 SE CookBook - All Rights Reserved
+You may use, distribute and modify this code under the
+terms of the MIT license.
+You should have received a copy of the MIT license with
+this file. If not, please write to: help.cookbook@gmail.com
+
+-->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link
+      rel="stylesheet"
+      href="style/style.css"
+      type="text/css"
+      media="screen"
+    />
+    <script type="text/javascript" src="style/accordian.pack.js"></script>
+  </head>
+
+  <body onload="new Accordian('basic-accordian',5,'header_highlight');">
+    <div id="logo"><h1>CookBook</h1></div>
+    <div id="basic-accordian">
+      <div id="test-header" class="accordion_headings header_highlight">
+        Home
+      </div>
+      <div id="test-content">
+        <div class="accordion_child">
+          <h1>React Documentation</h1>
+          <p>
+            CookBook is a platform to search for recipes that can be made using
+            the available ingredients. This page provides information regarding
+            the React components of the application.
+          </p>
+        </div>
+      </div>
+      <div id="test0-header" class="accordion_headings">AppContent.tsx</div>
+      <div id="test0-content">
+        <div class="accordion_child">
+          <p> The component defines the routes for the application and decides which component on render on that particular route.
+          </p>
+      </div>
+      </div>
+      <div id="test1-header" class="accordion_headings">Home Page</div>
+      <div id="test1-content">
+        <div class="accordion_child">
+          <p>Landing page for the application.</p>
+          <h3>List of static pages included:</h3>
+          <table style="width: 100%; border-spacing: 0">
+            <tr>
+              <th>Page</th>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td>About Page</td>
+              <td>Describes the purpose of the application.</td>
+            </tr>
+            <tr>
+              <td>Contact Page</td>
+              <td>Provides contact/support information.</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div id="test2-header" class="accordion_headings">RecipeInformation</div>
+      <div id="test2-content">
+        <div class="accordion_child">
+            
+          <p>
+            <h3>List of files:</h3>
+            <table style="width: 100%; border-spacing: 0">
+              <tr>
+                <th>File</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td>getRecipeInformation.action.ts</td>
+                <td>Contains action handlers (LOAD, SUCCESS, FAIL) for getting the recipe information from the DB</td>
+              </tr>
+              <tr>
+                <td>getRecipeInformation.actionTypes.ts</td>
+                <td>Contains predefined action types since we are using Typescript. </td>
+              </tr>
+              <tr>
+                <td>getRecipeInformation.reducer.ts</td>
+                <td>Contains a normal function that performs state update based on API call output - SUCCESS/FAIL. </td>
+              </tr>
+              <tr>
+                <td>getRecipeInformation.saga.ts</td>
+                <td>It is a middleware, that handles the async logic in the data flow based on the action that has been dispatched </td>
+              </tr>
+              <tr>
+                <td>RecipeInformation.tsx</td>
+                <td>This component displays images for recipe making, the procedure to make the dish and the trivia and factual info related to it.
+                This component is a dynamic component and is seen only when you click on a recipe from the recipe list</td>
+              </tr>
+            </table>
+          </p>
+        </div>
+      </div>
+      
+      <div id="test3-header" class="accordion_headings">RecipeList</div>
+      <div id="test3-content">
+        <div class="accordion_child">
+          <p>
+            <h3>List of files:</h3>
+            <table style="width: 100%; border-spacing: 0">
+              <tr>
+                <th>File</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td>getRecipeList.action.ts</td>
+                <td>Contains action handlers (LOAD, SUCCESS, FAIL) for getting the recipe information from the DB</td>
+              </tr>
+              <tr>
+                <td>getRecipeList.actionTypes.ts</td>
+                <td>Contains predefined action types since we are using Typescript. </td>
+              </tr>
+              <tr>
+                <td>getRecipeList.reducer.ts</td>
+                <td>Contains a normal function that performs state update based on API call output - SUCCESS/FAIL. </td>
+              </tr>
+              <tr>
+                <td>getRecipeList.saga.ts</td>
+                <td>It is a middleware, that handles the async logic in the data flow based on the action that has been dispatched. </td>
+              </tr>
+              <tr>
+                <td>RecipeList.tsx</td>
+                <td>This component displays a list of recipes based on the ingredients inputed. This component is a dynamic component and is seen only when you click on a recipe from the recipe list. </td>
+              </tr>
+            </table>
+          </p>
+        </div>
+      </div>
+      <div id="test4-header" class="accordion_headings">GetIngredients</div>
+      <div id="test4-content">
+        <div class="accordion_child">
+          <p>
+            <h3>List of files:</h3>
+            <table style="width: 100%; border-spacing: 0">
+              <tr>
+                <th>File</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td>getIngredients.action.ts</td>
+                <td>Contains action handlers (LOAD, SUCCESS, FAIL) for getting the recipe information from the DB</td>
+              </tr>
+              <tr>
+                <td>getIngredients.actionTypes.ts</td>
+                <td>Contains predefined action types since we are using Typescript. </td>
+              </tr>
+              <tr>
+                <td>getIngredients.reducer.ts</td>
+                <td>Contains a normal function that performs state update based on API call output - SUCCESS/FAIL. </td>
+              </tr>
+              <tr>
+                <td>getIngredients.saga.ts</td>
+                <td>It is a middleware, that handles the async logic in the data flow based on the action that has been dispatched. </td>
+              </tr>
+              <tr>
+                <td>GetIngredients.tsx</td>
+                <td>This component has the logic to accept input i.e. ingredients for the user. It displays the inputted ingredients in the form of chips. On submit press, it triggers an API call to retrieve a list of recipes that could be made from the inputted ingredients.
+                    Search component remain static throughout the application </td>
+              </tr>
+            </table>
+          </p>
+      </div>
+      </div>
+      <div id="test5-header" class="accordion_headings">Header</div>
+      <div id="test5-content">
+        <div class="accordion_child">
+          <p> This component is responsible for the static header seen throughout the application with the option to navigate back to home
+and provides 'Contact' and 'About' information.
+          </p>
+      </div>
+      </div>
+      <div id="test6-header" class="accordion_headings">Navbar</div>
+      <div id="test6-content">
+        <div class="accordion_child">
+          <p> Home, About, Contact options available for the user on the Navigation Bar.
+          </p>
+      </div>
+      </div>
+      
+    <div id="footer">
+      <p>COOKBOOK</p>
+    </div>
+  </body>
+</html>
