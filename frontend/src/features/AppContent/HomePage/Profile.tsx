@@ -4,9 +4,9 @@ import "./Profile.css"; // Optional, for styling
 const Profile: React.FC = () => {
   // Sample user details
   const [userData, setUserData] = useState({
-    name: "test",
-    email: "test@gmail.com",
-    profilePhoto: "", // URL or path to profile image
+    name: localStorage.getItem('userName') ?? "Test User",
+    email: localStorage.getItem('userEmail') ?? "test@ncsu.edu",
+    profilePhoto: localStorage.getItem("profilePhoto") ?? "" , // URL or path to profile image
   });
 
   // State for file input (photo upload)
@@ -15,17 +15,17 @@ const Profile: React.FC = () => {
   // Handle file input changes (when user selects a photo)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  // Handle file upload (set the selected file as profile photo)
-  const handleFileUpload = () => {
-    if (selectedFile) {
-      setUserData({
-        ...userData,
-        profilePhoto: URL.createObjectURL(selectedFile), // Generate a URL for the image
-      });
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.readAsDataURL(file); // Convert to Base64
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        setUserData((prev) => ({
+          ...prev,
+          profilePhoto: base64String,
+        }));
+        localStorage.setItem("profilePhoto", base64String); // Save to localStorage
+      };
     }
   };
 
@@ -67,7 +67,6 @@ const Profile: React.FC = () => {
           onChange={handleFileChange}
           style={{ marginBottom: "10px" }}
         />
-        <button onClick={handleFileUpload}>Upload Photo</button>
       </div>
     </div>
   );

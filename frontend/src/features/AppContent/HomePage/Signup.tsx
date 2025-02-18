@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 const Signup: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [retypePassword, setRetypePassword] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
@@ -20,9 +22,16 @@ const Signup: React.FC = () => {
       }
     }
 
+    // check if the password and retyped password match
+    if (password !== retypePassword) {
+      setError('Passwords do not match!');
+      return;
+    }
+
     // Save the new user data to local storage
     localStorage.setItem('userEmail', email);
     localStorage.setItem('userPassword', password);
+    localStorage.setItem('userName', name);
     alert('Signup successful!');
     navigate('/login'); // Redirect to login page
   };
@@ -40,10 +49,26 @@ const Signup: React.FC = () => {
       </div>
       <div>
         <input
+          type="text"
+          placeholder="Enter name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <div>
+        <input
           type="password"
           placeholder="Enter password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+        />
+      </div>
+      <div>
+        <input
+          type="password"
+          placeholder="Retype password"
+          value={retypePassword}
+          onChange={(e) => setRetypePassword(e.target.value)}
         />
       </div>
       {error && <p>{error}</p>}

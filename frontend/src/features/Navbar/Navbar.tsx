@@ -44,9 +44,6 @@ function Navbar() {
       <a href="/contact" className="navbar-item" style={{ color: theme.color }}>
         Contact Us
       </a>
-      <a href="/signup" className="navbar-item" style={{ color: theme.color }}>
-        Signup
-      </a>
       <a
         href="/shoppinglist"
         className="navbar-item"
@@ -90,6 +87,9 @@ function Navbar() {
           ))}
         </select>
       </div>
+      <a href="/signup" className="navbar-item" style={{ color: theme.color }}>
+        Signup
+      </a>
     </section>
   )
 }
