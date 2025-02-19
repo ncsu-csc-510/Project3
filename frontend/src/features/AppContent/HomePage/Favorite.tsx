@@ -11,7 +11,10 @@ import {
   Grid,
   Typography,
   Stack,
+  CardActions,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 
 type Recipe = {
   name: string;
@@ -69,19 +72,20 @@ const Favorites: React.FC = () => {
         Click on a recipe to view details
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={2} justifyContent="center">
         {favorites.map((recipe, index) => (
-          <Grid item key={index} xs={15} sm={6} md={4} lg={4}>
-           
+          <Grid item key={index} xs={12} sm={6} md={4} lg={3}> 
             <Card 
             sx={{ 
-                width: 400, // Increase card width
-                height: 400, // Ensure uniform height
-                display: "flex", 
-                flexDirection: "column", 
-                justifyContent: "space-between",
-                cursor: "pointer",
-                boxShadow: 3
+              width: "100%", 
+              height: "100%", 
+              display: "flex", 
+              flexDirection: "column", 
+              justifyContent: "space-between",
+              borderRadius: 3, 
+              overflow: "hidden",
+              transition: "transform 0.3s ease-in-out",
+              "&:hover": { transform: "scale(1.05)", boxShadow: 6 }
             }}
             onClick={() => {
               console.log(recipe);
@@ -91,30 +95,40 @@ const Favorites: React.FC = () => {
             <CardActionArea>
               <CardMedia
                   component="img"
-                  height="250"
-                  width="200"
+                  height="200"
                   image={recipe?.images?.length > 0 && recipe?.images[0]?.trim() !== '' 
                     ? recipe.images[0].split('"').join('') 
                     : noImage} // Handle missing images
                   alt={recipe.name}
-                  sx={{ objectFit: "cover" }} 
+                  sx={{ width: "100%", height: 250, objectFit: "cover" }} 
                 />
                 <CardContent>
-                <Typography variant="h6" fontWeight="bold" textAlign="center">
+                    <Typography variant="h6" fontWeight="bold" textAlign="center" sx={{ color: "#333", mb: 1 }}>
                     {recipe.name}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" textAlign="center">
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" textAlign="center" sx={{ fontStyle: "italic", mb: 1 }}>
                     {recipe.category} • {recipe.instructions.length} steps
-                    
-                </Typography>
-                <Typography variant="body2" color="textSecondary" textAlign="center">
+                  </Typography>
+                  <Typography variant="body2" textAlign="center" sx={{ color: "#555" }}>
                     {recipe.servings} servings • {recipe.prepTime} prep time
-                </Typography>
-                <Typography variant="body2" color="textSecondary" textAlign="center">
+                  </Typography>
+                  <Typography variant="body1" color="textSecondary" textAlign="center">
                     {recipe.protein}g protein • {recipe.carbs}g carbs • {recipe.fat}g fat
-                </Typography>
+                  </Typography>
                 </CardContent>
             </CardActionArea>
+              <CardActions sx={{ display: "flex", justifyContent: "center" }}>
+                <IconButton color="error" onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm("Are you sure you want to remove this recipe from your favorites?")) {
+                    const updatedFavorites = favorites.filter(fav => fav._id !== recipe._id);
+                    setFavorites(updatedFavorites);
+                    localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+                  }
+                }}>
+                  <CloseIcon />
+                </IconButton>
+              </CardActions>
             </Card>
           </Grid>
         ))}
