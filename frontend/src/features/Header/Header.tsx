@@ -27,7 +27,7 @@ const Header = () => {
       <section className="header-top">
         <section className="header-top__logo">
           <a href="/" className="header-logo" style={{ color: theme.headerColor }}>
-            C o o k B o o k
+            Cook Book
           </a>
         </section>
         <section className="header-top__navbar" data-testid="nav-comp-43">
