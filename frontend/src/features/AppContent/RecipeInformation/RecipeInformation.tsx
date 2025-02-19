@@ -41,6 +41,7 @@ import { FaWhatsapp, FaSlack, FaDiscord } from 'react-icons/fa'
 import axios from 'axios'
 import { useTheme } from '../../Themes/themeContext'
 import { useNavigate } from 'react-router-dom'; 
+import RecipeFavoriteButton from './RecipeFavoriteButton'
 
 
 let triviaPaperStyles = {
@@ -355,9 +356,11 @@ style={{
           <Paper elevation={24} style={triviaPaperStyles}>
             <Grid container spacing={3} style={{ background: theme.background, color: theme.color,  }}>
               <Grid item xs={12} style={{ textAlign: 'center', color: theme.color, background: theme.background}}>
-                <Typography variant="h5" gutterBottom>
+                <Typography variant="h5" gutterBottom style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   Summary
+                    <RecipeFavoriteButton recipe={recipe} />
                 </Typography>
+
               </Grid>
               <Grid item xs={12} textAlign={'left'} style={{ background: theme.background, color: theme.color,  }}>
                 <Typography variant="h6">
