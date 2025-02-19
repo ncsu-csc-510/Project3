@@ -24,7 +24,7 @@ import RecipeList from './RecipeList/RecipeList'
 import Login from "./HomePage/Login"; 
 import Profile from "./HomePage/Profile";
 import Signup from "./HomePage/Signup";
-
+import Favorite from "./HomePage/Favorite";
 import MealPage from './HomePage/MealPage'
 
 import SmartShoppingList from '../ShoppingList/SmartShoppingList'
@@ -42,6 +42,7 @@ const AppContent = () => {
       <Route path="/faq" element={<FAQPage />} />
       <Route path="/shoppinglist" element={<SmartShoppingList />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/favorites" element={<Favorite />} />
 
         {/* Route for Login */}
         <Route path="/login" element={<Login />} />
