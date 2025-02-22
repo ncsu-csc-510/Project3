@@ -255,6 +255,25 @@ async def search_recipe_by_name(name: str, request: Request):
             detail=f"An error occurred while searching for the recipe."
         )
         
+@router.delete("/delete-recipe/{recipe_id}", response_description="Delete a recipe by ID", status_code=200)
+async def delete_recipe(recipe_id: str, request: Request):
+    """Deletes a recipe from the database by its ID"""
+    try:
+        result = request.app.database["recipes"].delete_one({"_id": recipe_id})
+        
+        # Check if a recipe was deleted
+        if result.deleted_count == 1:
+            return {"message": f"Recipe with ID {recipe_id} has been deleted successfully."}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Recipe with ID {recipe_id} not found"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"An error occured while deleting the recipe."
+        )
 # @app.post("/signup")
 # async def signup(user: User):
 #     if user.email in users_db:
