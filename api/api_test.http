@@ -3,7 +3,7 @@ POST http://localhost:8000/recipe/add-recipe/
 Content-Type: application/json
 
 {
-    "name": "Test1",
+    "name": "Best Recipe",
     "cookTime": "24H",
     "prepTime": "45M",
     "totalTime": "24H45M",
@@ -35,8 +35,16 @@ Content-Type: application/json
     ]
 }
 
+### Search Recipe by Name (Case & Whitespace Insensitive)
+GET http://localhost:8000/recipe/search-name/BestRecipe
+Content-Type: application/json
+
 ###
 
-### Get All Recipes to Confirm Addition
-GET http://localhost:8000/
+GET http://localhost:8000/recipe/search-name/doesnotExist
+Content-Type: application/json
+
+###
+
+GET http://localhost:8000/recipe/search-name/best Recipe   
 Content-Type: application/json

@@ -210,7 +210,51 @@ async def add_new_recipe(recipe: Recipe, request: Request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while adding the recipe: {str(e)}"
         )
+        
+@router.get("/search-name/{name}", response_description="Search recipes by name (case and whitespace insensitive)", response_model=List[Recipe])
+async def search_recipe_by_name(name: str, request: Request):
+    """Searches the database for recipe where the name matchse"""
+    try:
+        processed_name = name.lower().replace(" ", "")
     
+    # MongoDB query: Convert 'name' to lowercase, remove whitespace, and compare
+        pipeline = [
+            {
+                "$addFields": {
+                    "normalized_name": {
+                        "$replaceAll": {
+                            "input": {"$toLower": "$name"},
+                            "find": " ",
+                            "replacement": ""
+                        }
+                    }
+                }
+            },
+            {
+                "$match": {
+                    "normalized_name": processed_name
+                }
+            },
+            {
+                "$project": {
+                    "normalized_name": 0  # Exclude the temporary field from the results
+                }
+            }
+        ]
+
+        recipes = list(request.app.database["recipes"].aggregate(pipeline))
+        
+        if not recipes:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No recipe found with name '{name}'.")
+        
+        return recipes 
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"An error occurred while searching for the recipe."
+        )
+        
 # @app.post("/signup")
 # async def signup(user: User):
 #     if user.email in users_db:
