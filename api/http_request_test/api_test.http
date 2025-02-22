@@ -1,0 +1,42 @@
+### Add New Recipe to Database (Auto-Generated ID)
+POST http://localhost:8000/recipe/add-recipe/
+Content-Type: application/json
+
+{
+    "name": "Test1",
+    "cookTime": "24H",
+    "prepTime": "45M",
+    "totalTime": "24H45M",
+    "description": "Make and share this Low-Fat Berry Blue Frozen Dessert recipe from Food.com.",
+    "images": [
+        "https://img.sndimg.com/food/image/upload/w_555,h_416,c_fit,fl_progressive,q_95/v1/img/recipes/38/YUeirxMLQaeE1h3v3qnM_229%20berry%20blue%20frzn%20dess.jpg"
+    ],
+    "category": "Frozen Desserts",
+    "tags": ["Dessert", "Low Protein", "Healthy", "Summer"],
+    "ingredientQuantities": ["4", "1/4", "1", "1"],
+    "ingredients": ["blueberries", "granulated sugar", "vanilla yogurt", "lemon juice"],
+    "rating": "4.5",
+    "calories": "170.9",
+    "fat": "2.5",
+    "saturatedFat": "1.3",
+    "cholesterol": "8",
+    "sodium": "29.8",
+    "carbs": "37.1",
+    "fiber": "3.6",
+    "sugar": "30.2",
+    "protein": "3.2",
+    "servings": "4",
+    "instructions": [
+        "Toss 2 cups berries with sugar.",
+        "Let stand for 45 minutes, stirring occasionally.",
+        "Transfer berry-sugar mixture to food processor.",
+        "Add yogurt and process until smooth.",
+        "Strain through fine sieve and freeze overnight."
+    ]
+}
+
+###
+
+### Get All Recipes to Confirm Addition
+GET http://localhost:8000/
+Content-Type: application/json

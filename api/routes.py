@@ -19,6 +19,7 @@ from groq import Groq
 from pydantic import BaseModel, conint, conlist, PositiveInt
 import logging
 from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2,RecipeQuery
+from uuid import uuid4
 # from models import User
 # from models import User
 
@@ -187,6 +188,28 @@ async def recommend_recipes(query: RecipeQuery = Body(...)):
         logger = logging.getLogger(__name__)
         logger.error(f"Unexpected error in recommend_recipes: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
+    
+@router.post("/add-recipe/", response_description="Add a new recipe to the database", status_code=201, response_model=Recipe)
+async def add_new_recipe(recipe: Recipe, request: Request):
+    """Adds a new recipe to the database with an auto-generated ID."""
+    try:
+    
+        recipe_dict = recipe.dict(by_alias=True)
+        recipe_dict["_id"] = str(uuid4())  
+
+        # Insert the recipe into the database
+        result = request.app.database["recipes"].insert_one(recipe_dict)
+
+        # Fetch the newly inserted recipe to return
+        created_recipe = request.app.database["recipes"].find_one({"_id": result.inserted_id})
+        created_recipe["_id"] = str(created_recipe["_id"])  # Convert ObjectId to string
+
+        return created_recipe
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while adding the recipe: {str(e)}"
+        )
     
 # @app.post("/signup")
 # async def signup(user: User):
