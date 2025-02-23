@@ -192,8 +192,22 @@ async def recommend_recipes(query: RecipeQuery = Body(...)):
 @router.post("/add-recipe/", response_description="Add a new recipe to the database", status_code=201, response_model=Recipe)
 async def add_new_recipe(recipe: Recipe, request: Request):
     """Adds a new recipe to the database with an auto-generated ID."""
-    try:
     
+    required_fields = {
+            "name": recipe.name,
+            "category": recipe.category,
+            "ingredients": recipe.ingredients,
+            "instructions": recipe.instructions
+        }
+        
+    missing_fields = [field for field, value in required_fields.items() if not value]
+    if missing_fields:
+        raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Missing required fields: {', '.join(missing_fields)}"
+            )
+            
+    try:        
         recipe_dict = recipe.dict(by_alias=True)
         recipe_dict["_id"] = str(uuid4())  
 
