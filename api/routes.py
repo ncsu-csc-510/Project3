@@ -318,7 +318,7 @@ async def get_nutrition_recommendations(query: NutritionQuery, request: Request)
         fat = (0.3 * tdee) / 9     # Fat: 9 kcal per gram
         sugar = 0.1 * tdee / 4     # 10% of calories from sugar (WHO recommendation)
 
-        # Use Groq API for conversational explanation
+        
         response = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": "You are a nutrition assistant who provides detailed diet recommendations."},
@@ -343,6 +343,7 @@ async def get_nutrition_recommendations(query: NutritionQuery, request: Request)
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while generating recommendations: {str(e)}"
         )
+        
 # @app.post("/signup")
 # async def signup(user: User):
 #     if user.email in users_db:
