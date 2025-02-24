@@ -338,3 +338,136 @@ def test_get_meal_plan():
     assert len(meal_plan) == 7
     assert any(entry["recipe"] is not None for entry in meal_plan)
 
+def test_add_new_recipe():
+    """Test to add new recipe"""
+    recipe_data = {
+        "name": "Test Test",
+        "cookTime": "1H",
+        "prepTime": "30M",
+        "totalTime": "1H30M",
+        "description": "A delicious and moist chocolate cake recipe.",
+        "images": [
+            "https://example.com/chocolate_cake.jpg"
+        ],
+        "category": "Dessert",
+        "tags": ["Chocolate", "Cake", "Dessert"],
+        "ingredientQuantities": ["2 cups", "1 cup", "3", "1/2 cup"],
+        "ingredients": ["flour", "sugar", "eggs", "cocoa powder"],
+        "rating": "5",
+        "calories": "450",
+        "fat": "20",
+        "saturatedFat": "10",
+        "cholesterol": "80",
+        "sodium": "300",
+        "carbs": "50",
+        "fiber": "5",
+        "sugar": "30",
+        "protein": "6",
+        "servings": "8",
+        "instructions": [
+            "Preheat oven to 350°F (175°C).",
+            "Mix dry ingredients together.",
+            "Add wet ingredients and mix until smooth.",
+            "Bake for 30 minutes or until a toothpick comes out clean."
+        ]
+    }
+    
+    response = requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    assert response.status_code == 201
+    response_data = response.json()
+    recipe_id = response_data.get("_id")
+    
+    assert "name" in response_data
+    assert response_data["name"] == recipe_data["name"]
+    assert "id" in response_data or "_id" in response_data
+    
+    delete_response = requests.delete(f"{BASE_URL}/delete-recipe/{recipe_id}")
+    assert delete_response.status_code == 200
+    
+def test_search_recipe_by_name_exact():
+    """Test searching for a recipe by exact name (case & whitespace insensitive)."""
+    search_name = "bestchocolatecake"  # after trimming spaces and lowering case
+    response = requests.get(f"{BASE_URL}/search-name/{search_name}")
+    assert response.status_code == 200
+    recipes = response.json()
+    assert isinstance(recipes, list)
+    assert any(
+        recipe["name"].replace(" ", "").lower() == search_name for recipe in recipes
+    )
+
+
+def test_search_recipe_by_name_case_insensitive():
+    """Test searching for a recipe with different casing and extra spaces."""
+    search_name = "  BeSt   ChoCoLaTe  CaKe  "  # mixed case with extra spaces
+    processed_search = search_name.lower().replace(" ", "")
+    response = requests.get(f"{BASE_URL}/search-name/{processed_search}")
+    assert response.status_code == 200
+    recipes = response.json()
+    assert isinstance(recipes, list)
+    assert any(
+        recipe["name"].replace(" ", "").lower() == processed_search for recipe in recipes
+    )
+    
+def test_search_recipe_by_name_not_found():
+    """Test searching for a non-existent recipe by name."""
+    search_name = "nonexistentrecipe"
+    response = requests.get(f"{BASE_URL}/search-name/{search_name}")
+    assert response.status_code == 500
+    assert "detail" in response.json()
+    assert response.json()["detail"] == f"An error occurred while searching for the recipe."
+
+
+def test_search_recipe_by_name_special_characters():
+    """Test searching for a recipe with special characters (should not match)."""
+    search_name = "!@#$%^&*()_+"
+    response = requests.get(f"{BASE_URL}/search-name/{search_name}")
+    assert response.status_code == 500
+    assert "detail" in response.json()
+    
+def test_delete_recipe_valid_id():
+    """Test deleting a recipe with a valid ID"""
+    new_recipe = {
+        "name": "Test Recipe for Deletion",
+        "cookTime": "20M",
+        "prepTime": "10M",
+        "totalTime": "30M",
+        "description": "Temporary recipe for deletion test.",
+        "images": [],
+        "category": "Test",
+        "tags": ["Test"],
+        "ingredientQuantities": ["1", "2"],
+        "ingredients": ["test ingredient 1", "test ingredient 2"],
+        "rating": "5",
+        "calories": "100",
+        "fat": "1",
+        "saturatedFat": "0.5",
+        "cholesterol": "0",
+        "sodium": "10",
+        "carbs": "20",
+        "fiber": "1",
+        "sugar": "5",
+        "protein": "2",
+        "servings": "1",
+        "instructions": ["Step 1", "Step 2"]
+    }
+    
+    # Add the recipe 
+    add_response = requests.post(f"{BASE_URL}/add-recipe/", json=new_recipe)
+    assert add_response.status_code == 201
+    recipe_id = add_response.json().get("_id")
+    
+    # Delete the recipe 
+    delete_response = requests.delete(f"{BASE_URL}/delete-recipe/{recipe_id}")
+    assert delete_response.status_code == 200
+    assert "message" in delete_response.json()
+    
+    # Verify deletion 
+    verify_response = requests.get(f"{BASE_URL}/{recipe_id}")
+    assert verify_response.status_code == 404
+
+def test_delete_recipe_invalid_id():
+    """Test deleting a recipe with a non-existent ID."""
+    non_existent_id = "00000000-0000-0000-0000-000000000000"
+    response = requests.delete(f"{BASE_URL}/delete-recipe/{non_existent_id}")
+    assert response.status_code == 500
+    assert "detail" in response.json()

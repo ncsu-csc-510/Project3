@@ -19,6 +19,7 @@ from groq import Groq
 from pydantic import BaseModel, conint, conlist, PositiveInt
 import logging
 from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2,RecipeQuery
+from uuid import uuid4
 # from models import User
 # from models import User
 
@@ -188,6 +189,105 @@ async def recommend_recipes(query: RecipeQuery = Body(...)):
         logger.error(f"Unexpected error in recommend_recipes: {str(e)}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
     
+@router.post("/add-recipe/", response_description="Add a new recipe to the database", status_code=201, response_model=Recipe)
+async def add_new_recipe(recipe: Recipe, request: Request):
+    """Adds a new recipe to the database with an auto-generated ID."""
+    
+    required_fields = {
+            "name": recipe.name,
+            "category": recipe.category,
+            "ingredients": recipe.ingredients,
+            "instructions": recipe.instructions
+        }
+        
+    missing_fields = [field for field, value in required_fields.items() if not value]
+    if missing_fields:
+        raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Missing required fields: {', '.join(missing_fields)}"
+            )
+            
+    try:        
+        recipe_dict = recipe.dict(by_alias=True)
+        recipe_dict["_id"] = str(uuid4())  
+
+        # Insert the recipe into the database
+        result = request.app.database["recipes"].insert_one(recipe_dict)
+
+        # Fetch the newly inserted recipe to return
+        created_recipe = request.app.database["recipes"].find_one({"_id": result.inserted_id})
+        created_recipe["_id"] = str(created_recipe["_id"])  # Convert ObjectId to string
+
+        return created_recipe
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while adding the recipe: {str(e)}"
+        )
+        
+@router.get("/search-name/{name}", response_description="Search recipes by name (case and whitespace insensitive)", response_model=List[Recipe])
+async def search_recipe_by_name(name: str, request: Request):
+    """Searches the database for recipe where the name matchse"""
+    try:
+        processed_name = name.lower().replace(" ", "")
+    
+    # MongoDB query: Convert 'name' to lowercase, remove whitespace, and compare
+        pipeline = [
+            {
+                "$addFields": {
+                    "normalized_name": {
+                        "$replaceAll": {
+                            "input": {"$toLower": "$name"},
+                            "find": " ",
+                            "replacement": ""
+                        }
+                    }
+                }
+            },
+            {
+                "$match": {
+                    "normalized_name": processed_name
+                }
+            },
+            {
+                "$project": {
+                    "normalized_name": 0  # Exclude the temporary field from the results
+                }
+            }
+        ]
+
+        recipes = list(request.app.database["recipes"].aggregate(pipeline))
+        
+        if not recipes:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No recipe found with name '{name}'.")
+        
+        return recipes 
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"An error occurred while searching for the recipe."
+        )
+        
+@router.delete("/delete-recipe/{recipe_id}", response_description="Delete a recipe by ID", status_code=200)
+async def delete_recipe(recipe_id: str, request: Request):
+    """Deletes a recipe from the database by its ID"""
+    try:
+        result = request.app.database["recipes"].delete_one({"_id": recipe_id})
+        
+        # Check if a recipe was deleted
+        if result.deleted_count == 1:
+            return {"message": f"Recipe with ID {recipe_id} has been deleted successfully."}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Recipe with ID {recipe_id} not found"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"An error occured while deleting the recipe."
+        )
 # @app.post("/signup")
 # async def signup(user: User):
 #     if user.email in users_db:

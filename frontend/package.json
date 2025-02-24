@@ -25,6 +25,7 @@
     "react-scripts": "^5.0.1",
     "redux": "^4.2.0",
     "redux-saga": "^1.2.1",
+    "sweetalert2": "^11.17.2",
     "typescript": "^4.8.3",
     "web-vitals": "^2.1.4",
     "webpack-manifest-plugin": "^5.0.0"
