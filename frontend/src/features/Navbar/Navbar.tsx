@@ -54,6 +54,9 @@ function Navbar() {
       <a href="/favorites" className="navbar-item" style={{ color: theme.color }}>
         Favorites
       </a>
+      <a href="/add-recipe" className="navbar-item" style={{ color: theme.color }}>
+        Add recipe
+      </a>
       {/* Theme Dropdown */}
 
       <div className="theme-selector">

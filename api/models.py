@@ -20,16 +20,16 @@ class Recipe(BaseModel):
     """A data model representing a recipe"""
     id: str = Field(default_factory=uuid.uuid4,
                     alias="_id")  # Unique identifier for the recip
-    name: str  # Name of the recipe
+    name: str  # Name of the recipe Required
     cookTime: Optional[str] = None
     prepTime: Optional[str] = None
     totalTime: Optional[str] = None
     description: Optional[str] = None
     images: Optional[list] = None  # URLs of images related to the recipe
-    category: str
-    tags: List[str]
-    ingredientQuantities: list
-    ingredients: List[str]  # List of ingredients required
+    category: str # Required
+    tags: List[str] 
+    ingredientQuantities: list 
+    ingredients: List[str]  # Required
     rating: Optional[str] = None
     calories: Optional[str] = None
     fat: Optional[str] = None
@@ -41,7 +41,7 @@ class Recipe(BaseModel):
     sugar: Optional[str] = None
     protein: Optional[str] = None
     servings: Optional[str] = None
-    instructions: List[str]
+    instructions: List[str] # Required
 
     class Config:
         schema_extra = {

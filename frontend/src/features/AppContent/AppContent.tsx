@@ -26,6 +26,7 @@ import Profile from "./HomePage/Profile";
 import Signup from "./HomePage/Signup";
 import Favorite from "./HomePage/Favorite";
 import MealPage from './HomePage/MealPage'
+import AddRecipe from './HomePage/AddRecipe'
 
 import SmartShoppingList from '../ShoppingList/SmartShoppingList'
 
@@ -43,6 +44,7 @@ const AppContent = () => {
       <Route path="/shoppinglist" element={<SmartShoppingList />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/favorites" element={<Favorite />} />
+      <Route path='/add-recipe' element={<AddRecipe />} />
 
         {/* Route for Login */}
         <Route path="/login" element={<Login />} />
