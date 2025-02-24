@@ -157,3 +157,11 @@ class ShoppingListItem(BaseModel):
     quantity: int
     unit: str
     checked: bool
+
+class NutritionQuery(BaseModel):
+    weight: float # in kg 
+    height: float # in centimeters 
+    age: int
+    gender: str # "male" or "female"
+    goal: str # "lose weight", "maintain weight", or "gain weight"
+    activity_level: str # "sedentary", "light", "moderate", "active", "very active"
