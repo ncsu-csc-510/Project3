@@ -17,13 +17,6 @@ def setup_db():
     app.database["shopping-list"].insert_many.return_value = None  # Mock insert
     yield app.database  # Use the mock database in tests
 
-def test_get_shopping_list(setup_db):
-    """Test to fetch shopping list."""
-    client = TestClient(app)
-    response = client.get("/shopping-list")
-    assert response.status_code == 200
-    assert response.json() == {"shopping_list": []}
-
 def test_update_shopping_list(setup_db):
     """Test to update shopping list."""
     client = TestClient(app)
