@@ -7,7 +7,6 @@ import pytest
 from bson import ObjectId  
 from main import app
 
-
 @pytest.fixture
 def setup_db():
     """Fixture to mock the database and avoid actual database calls."""
