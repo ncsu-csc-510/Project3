@@ -32,7 +32,6 @@ config = {
     "GROQ_API_KEY": os.getenv("GROQ_API_KEY"),
     "PORT": os.getenv("PORT")
 }
-app = FastAPI()
 
 origins = ['http://localhost:3000', "*"]
 
