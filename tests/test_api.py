@@ -471,3 +471,142 @@ def test_delete_recipe_invalid_id():
     response = requests.delete(f"{BASE_URL}/delete-recipe/{non_existent_id}")
     assert response.status_code == 500
     assert "detail" in response.json()
+
+def test_search2_valid_input():
+    """ Test searching for recipes within a calorie range."""
+    response = requests.get(f"{BASE_URL}/search2/chicken,200,500")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+def test_search2_invalid_calorie_range():
+    """ Test searching for recipes with an invalid calorie range."""
+    response = requests.get(f"{BASE_URL}/search2/chicken,500,200")
+    assert response.status_code == 400  # Assuming the API validates calorie range
+
+def test_search2_missing_ingredient():
+    """ Test searching for recipes with a missing ingredient."""
+    response = requests.get(f"{BASE_URL}/search2/,100,300")
+    assert response.status_code == 400  # Assuming ingredient is required
+
+def test_search2_out_of_bounds_calories():
+    """ Test searching for recipes with out-of-bounds calorie values."""
+    response = requests.get(f"{BASE_URL}/search2/beef,-50,1000")
+    assert response.status_code == 400
+
+def test_search2_non_existent_ingredient():
+    """ Test searching for recipes with a non-existent ingredient."""
+    response = requests.get(f"{BASE_URL}/search2/unicorn,100,300")
+    assert response.status_code == 200
+    assert response.json() == []
+
+def test_search_name_valid():
+    response = requests.get(f"{BASE_URL}/search-name/Spaghetti%20Bolognese")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+def test_search_name_non_existent():
+    response = requests.get(f"{BASE_URL}/search-name/Dragon%20Stew")
+    assert response.status_code == 404
+
+def test_search_name_special_characters():
+    response = requests.get(f"{BASE_URL}/search-name/Pasta@123")
+    assert response.status_code == 404
+
+def test_search_name_case_insensitive():
+    response = requests.get(f"{BASE_URL}/search-name/spAGhetti%20bOLOGnese")
+    assert response.status_code == 200
+
+def test_search_name_empty():
+    response = requests.get(f"{BASE_URL}/search-name/")
+    assert response.status_code == 400
+
+def test_add_recipe_valid():
+    recipe_data = {
+        "name": "Test Recipe",
+        "category": "Dessert",
+        "ingredients": ["sugar", "flour"],
+        "instructions": ["Mix", "Bake"]
+    }
+    response = requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    assert response.status_code == 201
+    assert "name" in response.json()
+
+def test_add_recipe_missing_fields():
+    recipe_data = {"name": "Incomplete Recipe"}
+    response = requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    assert response.status_code == 400
+
+def test_add_recipe_duplicate():
+    recipe_data = {
+        "name": "Duplicate Recipe",
+        "category": "Dessert",
+        "ingredients": ["sugar", "flour"],
+        "instructions": ["Mix", "Bake"]
+    }
+    # Add the recipe once
+    requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    
+    # Attempt to add again
+    response = requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    assert response.status_code == 400
+
+def test_add_recipe_invalid_data_type():
+    recipe_data = {"name": "Invalid Recipe", "ingredients": "not-a-list"}
+    response = requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    assert response.status_code == 400
+
+def test_add_recipe_empty_payload():
+    response = requests.post(f"{BASE_URL}/add-recipe/", json={})
+    assert response.status_code == 400
+
+def test_delete_recipe_valid_id():
+    # Add a recipe first to get a valid ID
+    recipe_data = {
+        "name": "Recipe to Delete",
+        "category": "Main Course",
+        "ingredients": ["chicken", "spices"],
+        "instructions": ["Cook chicken", "Add spices"]
+    }
+    
+    add_response = requests.post(f"{BASE_URL}/add-recipe/", json=recipe_data)
+    recipe_id = add_response.json().get("_id")
+
+    # Delete the recipe
+    delete_response = requests.delete(f"{BASE_URL}/delete-recipe/{recipe_id}")
+    
+    assert delete_response.status_code == 200
+    assert delete_response.json()["message"] == f"Recipe with ID {recipe_id} has been deleted successfully."
+
+def test_delete_recipe_non_existent_id():
+    invalid_id = "00000000-0000-0000-0000-000000000000"
+    response = requests.delete(f"{BASE_URL}/delete-recipe/{invalid_id}")
+    
+    assert response.status_code == 404
+
+def test_delete_recipe_invalid_id_format():
+    invalid_id = "invalid-id"
+    response = requests.delete(f"{BASE_URL}/delete-recipe/{invalid_id}")
+    
+    assert response.status_code == 400
+
+def test_delete_recipe_unauthorized():
+   # Assuming authentication is required for deletion
+   invalid_token_headers = {"Authorization": "Bearer invalid-token"}
+   recipe_id = "valid-id"
+   delete_response = requests.delete(
+       f"{BASE_URL}/delete-recipe/{recipe_id}", headers=invalid_token_headers)
+   
+   assert delete_response.status_code == 403
+
+def test_stress_test_search_routes():
+   ingredients_list = [f"ingredient_{i}" for i in range(100)]
+   data = {"ingredients": ingredients_list, "page": 1}
+   
+   # Stress testing /search/
+   search_response = requests.post(f"{BASE_URL}/search/", json=data)
+   assert search_response.status_code == 200
+   
+   # Stress testing /search2/
+   data.update({"caloriesUp": 1000, "fatUp": 50, "sugUp": 30, "proUp": 20})
+   search2_response = requests.post(f"{BASE_URL}/search2/", json=data)
+   assert search2_response.status_code == 200
