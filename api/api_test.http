@@ -50,3 +50,16 @@ Content-Type: application/json
 ### Verify Deletion by Trying to Get the Deleted Recipe
 GET http://localhost:8000/recipe/0d204cef-365d-4edd-8071-d05f5bccdeab
 Content-Type: application/json
+
+### Chatbot Nutrition Recommendation Test
+POST http://localhost:8000/recipe/nutrition-chatbot/
+Content-Type: application/json
+
+{
+    "weight": 70,
+    "height": 175,
+    "age": 25,
+    "gender": "male",
+    "goal": "lose weight",
+    "activity_level": "moderate"
+}
