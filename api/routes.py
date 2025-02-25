@@ -18,7 +18,7 @@ import pymongo
 from groq import Groq
 from pydantic import BaseModel, conint, conlist, PositiveInt
 import logging
-from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2,RecipeQuery
+from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery
 from uuid import uuid4
 # from models import User
 # from models import User
@@ -288,3 +288,59 @@ async def delete_recipe(recipe_id: str, request: Request):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"An error occured while deleting the recipe."
         )
+        
+@router.post("/nutrition-chatbot/", response_description="Get personalized nutrition recommendations", status_code=200)
+async def get_nutrition_recommendations(query: NutritionQuery, request: Request):
+    try:
+        # Calculate BMR using Mifflin-St Jeor Equation
+        if query.gender.lower() == "male":
+            bmr = 10 * query.weight + 6.25 * query.height - 5 * query.age + 5
+        else:
+            bmr = 10 * query.weight + 6.25 * query.height - 5 * query.age - 161
+
+        # Adjust BMR based on activity level
+        activity_factors = {
+            "sedentary": 1.2,
+            "light": 1.375,
+            "moderate": 1.55,
+            "active": 1.725,
+            "very active": 1.9
+        }
+        tdee = bmr * activity_factors.get(query.activity_level, 1.2)
+
+        if query.goal.lower() == "lose weight":
+            tdee -= 500  # Reduce 500 calories/day for weight loss
+        elif query.goal.lower() == "gain weight":
+            tdee += 500  # Add 500 calories/day for weight gain
+
+        # Macronutrient distribution (example: 40% carbs, 30% protein, 30% fat)
+        protein = (0.3 * tdee) / 4  # Protein: 4 kcal per gram
+        fat = (0.3 * tdee) / 9     # Fat: 9 kcal per gram
+        sugar = 0.1 * tdee / 4     # 10% of calories from sugar (WHO recommendation)
+
+        
+        response = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are a nutrition assistant who provides detailed diet recommendations."},
+                {"role": "user", "content": f"I weigh {query.weight}kg, am {query.height}cm tall, {query.age} years old, {query.gender}, "
+                                            f"and I want to {query.goal}. My activity level is {query.activity_level}. Provide me with calorie, fat, sugar, and protein recommendations."}
+            ],
+            model="llama3-8b-8192",
+        )
+
+        chatbot_response = response.choices[0].message.content
+
+        return {
+            "recommended_calories": round(tdee),
+            "recommended_protein_g": round(protein),
+            "recommended_fat_g": round(fat),
+            "recommended_sugar_g": round(sugar),
+            "chatbot_response": chatbot_response
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while generating recommendations: {str(e)}"
+        )
+        
