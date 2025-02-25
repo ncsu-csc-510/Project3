@@ -21,6 +21,7 @@ import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import SmartShoppingList from './SmartShoppingList'
 import axios from 'axios'
+import { ThemeProvider } from '../Themes/themeContext'
 
 
 // Cast axios as a jest.Mocked object
@@ -42,12 +43,17 @@ describe('SmartShoppingList Component', () => {
   })
 
   test('renders the component and displays the title', () => {
-    render(<SmartShoppingList />)
+    render(
+    <ThemeProvider>
+      <SmartShoppingList />
+    </ThemeProvider>)
     expect(screen.getByText('Smart Shopping List')).toBeInTheDocument()
   })
 
   test('renders the add item fields', () => {
-    render(<SmartShoppingList />)
+    render(<ThemeProvider>
+      <SmartShoppingList />
+    </ThemeProvider>)
     expect(screen.getByLabelText('Add a shopping item')).toBeInTheDocument()
     expect(screen.getByLabelText('Quantity')).toBeInTheDocument()
     expect(screen.getByText('Add Item')).toBeInTheDocument()
@@ -134,7 +140,10 @@ describe('SmartShoppingList Component', () => {
   // })
 
   test('exports the list to PDF', async () => {
-    render(<SmartShoppingList />)
+    render(
+      <ThemeProvider>
+        <SmartShoppingList />
+      </ThemeProvider>)
 
     fireEvent.click(screen.getByText('Export List'))
 
