@@ -17,23 +17,34 @@ this file. If not, please write to: help.cookbook@gmail.com
 */
 
 import Navbar from './Navbar'
+import { ThemeProvider } from '../Themes/themeContext'
 
 test('shows Home link in Navbar', () => {
-  render(<Navbar />)
+  render(
+  <ThemeProvider>
+    <Navbar />
+  </ThemeProvider>
+  )
   expect(screen.getByText('Home')).toBeInTheDocument()
 })
 
 test('shows About link in Navbar', () => {
-  render(<Navbar />)
+  render(<ThemeProvider>
+    <Navbar />
+  </ThemeProvider>)
   expect(screen.getByText('About')).toBeInTheDocument()
 })
 
 test('shows Contact Us link in Navbar', () => {
-  render(<Navbar />)
+  render(<ThemeProvider>
+    <Navbar />
+  </ThemeProvider>)
   expect(screen.getByText(/Contact/i)).toBeInTheDocument()
 })
 
 test('shows Contact Us link in Navbar', () => {
-  render(<Navbar />)
+  render(<ThemeProvider>
+    <Navbar />
+  </ThemeProvider>)
   expect(screen.getByText(/FAQ/i)).toBeInTheDocument()
 })
