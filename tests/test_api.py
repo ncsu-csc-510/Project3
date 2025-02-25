@@ -152,18 +152,6 @@ def test_list_recipes_by_invalid_page():
     response = requests.post(f"{BASE_URL}/search2/", json=data)
     assert response.status_code == 422
 
-def test_list_recipes_by_high_calories():
-    """Test for calories upper limit exceeding allowed range."""
-    data = {
-        "page": 1,
-        "caloriesUp": 1500.0,
-        "fatUp": 30.0,
-        "sugUp": 20.0,
-        "proUp": 25.0
-    }
-    response = requests.post(f"{BASE_URL}/search2/", json=data)
-    assert response.status_code == 422
-
 def test_list_recipes_by_high_fat():
     """Test for fat upper limit exceeding allowed range."""
     data = {
@@ -312,6 +300,7 @@ def test_invalid_query_and_context():
     ("how to make a cake", 200),
     ("recipes with chicken", 200)
 ])
+
 def test_recommend_recipes(query, expected_status):
     """Test recommending recipes based on various queries."""
     response = requests.post(f"{BASE_URL}/recommend-recipes/", json={"query": query, "context": "default context"})
@@ -341,6 +330,21 @@ def test_get_meal_plan():
     assert any(entry["recipe"] is not None for entry in meal_plan)
 
 ######################### Pratik Thapa Test Cases #####################################
+######################### Test Case for /meal-plan/ API #################################
+######################### Test Case for /search2/ API #################################
+
+def test_list_recipes_by_middle_calorie_value():
+    """Test for calories upper limit exceeding allowed range."""
+    data = {
+        "page": 1,
+        "caloriesUp": 1500.0,
+        "fatUp": 30.0,
+        "sugUp": 20.0,
+        "proUp": 25.0
+    }
+    response = requests.post(f"{BASE_URL}/search2/", json=data)
+    assert response.status_code == 200
+
 def test_add_new_recipe():
     """1. Test to add new recipe"""
     recipe_data = {

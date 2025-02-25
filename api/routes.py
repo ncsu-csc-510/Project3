@@ -20,6 +20,8 @@ from pydantic import BaseModel, conint, conlist, PositiveInt
 import logging
 from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery
 from uuid import uuid4
+from bson import ObjectId
+
 # from models import User
 # from models import User
 
@@ -192,7 +194,9 @@ async def recommend_recipes(query: RecipeQuery = Body(...)):
 @router.post("/add-recipe/", response_description="Add a new recipe to the database", status_code=201, response_model=Recipe)
 async def add_new_recipe(recipe: Recipe, request: Request):
     """Adds a new recipe to the database with an auto-generated ID."""
-    
+    if not recipe.name or not recipe.category or not recipe.ingredients:
+        raise HTTPException(status_code=400, detail="Required fields missing")
+
     required_fields = {
             "name": recipe.name,
             "category": recipe.category,
@@ -272,6 +276,10 @@ async def search_recipe_by_name(name: str, request: Request):
 @router.delete("/delete-recipe/{recipe_id}", response_description="Delete a recipe by ID", status_code=200)
 async def delete_recipe(recipe_id: str, request: Request):
     """Deletes a recipe from the database by its ID"""
+    # Validate if the provided recipe_id is a valid ObjectId
+    if not ObjectId.is_valid(recipe_id):
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+    
     try:
         result = request.app.database["recipes"].delete_one({"_id": recipe_id})
         
