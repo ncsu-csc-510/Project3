@@ -28,6 +28,7 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material'
+import { BrowserRouter as Router } from 'react-router-dom';
 import StarIcon from '@mui/icons-material/Star'
 import React, { useEffect, useState } from 'react'
 import { Provider } from 'react-redux'
@@ -38,7 +39,9 @@ import { getRecipeInfoInitiator } from './getRecipeInformation.action'
 import './RecipeInformation.css'
 import noImage from './no-image.png'
 import { FaWhatsapp, FaSlack, FaDiscord } from 'react-icons/fa'
+
 import axios from 'axios'
+
 import { useTheme } from '../../Themes/themeContext'
 import { useNavigate } from 'react-router-dom'; 
 import RecipeFavoriteButton from './RecipeFavoriteButton'
@@ -159,21 +162,28 @@ const RecipeInformationWrapped = () => {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 
-  useEffect(() => {
-    // Load available voices
-    const loadVoices = () => {
+  const loadVoices = () => {
+    if (window.speechSynthesis) {
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
       if (voices.length > 0) {
         setSelectedVoice(voices[0]); // Default to the first voice
       }
-    };
-
-    // Ensure voices are loaded
-    loadVoices();
-    if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
+  };
+  
+  // Ensure voices are loaded after the window is loaded
+  useEffect(() => {
+    const handleVoiceChange = () => loadVoices(); // Re-run on voice change
+    if (typeof window.speechSynthesis !== "undefined") {
+      window.speechSynthesis.onvoiceschanged = handleVoiceChange; // Event to detect voice changes
+      loadVoices(); // Initial load
+    }
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
   }, []);
 
   const speakInstructions = (instruction: string) => {
@@ -196,12 +206,15 @@ const RecipeInformationWrapped = () => {
   }, [])
 
   if (recipeInfo.isGetRecipeInfoLoading) {
-    return <div data-testid="RecipeInfo-comp-43"> Loading ... </div>
+     <div data-testid="loading-spinner"> Loading ... </div>
+  }  else if (recipeInfo.isGetRecipeInfoError) {
+    return <div data-testid="error-message">Failed to load recipe data</div>;
   } else if (recipeInfo.isGetRecipeInfoSuccess) {
     const recipe = recipeInfo.getRecipeInfoData // The recipe object containing all necessary information
     const recipeDetailsforLLM = `
       Name: ${recipe.name}
-      Ingredients: ${recipe.ingredients.join(', ')}
+      Ingredients: ${Array.isArray(recipe.ingredients) ? recipe.ingredients.join(', ') : 'No ingredients available'}
+      Rating: ${recipe.rating}
       Rating: ${recipe.rating}
       Prep Time: ${recipe.prepTime}
       Sugar: ${recipe.sugar}g
@@ -212,7 +225,7 @@ const RecipeInformationWrapped = () => {
       Cook Time: ${recipe.cookTime}
       Cholesterol: ${recipe.cholesterol}mg/dl
       Fat: ${recipe.fat}g
-      Instructions: ${recipe.instructions.join(' ')}
+      Instructions: ${Array.isArray(recipe.instructions) ? recipe.instructions.join(' ') : 'No instructions available'}
     `
     const handleSubmit = async () => {
       try {
@@ -558,7 +571,8 @@ style={{
                 textAlign={'left'}
                 
               >
-                <div className="helper-text" style={{ color: theme.color }}>
+                <div data-testid="help-icon"
+                className="helper-text" style={{ color: theme.color }}>
                   Tap on any step below to hear the instructions read aloud.
                   Follow along with the recipe as you cook, and feel free to
                   pause or repeat any step!
@@ -590,7 +604,7 @@ style={{
           ))}
         </select>
       </div>
-                {recipe?.instructions.map((inst: string, idx: number) => (
+                {Array.isArray(recipe?.instructions) && recipe.instructions.map((inst: string, idx: number) => (
                   <div
                   style={{  backgroundColor: theme.background, // Card background from theme
                     color: theme.color, // Card text color
@@ -682,9 +696,11 @@ style={{
 
 const RecipeInformation = () => {
   return (
+    <Router>
     <Provider store={store}>
       <RecipeInformationWrapped />
     </Provider>
+    </Router>
   )
 }
 
