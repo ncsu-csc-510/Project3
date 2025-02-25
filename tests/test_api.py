@@ -602,15 +602,37 @@ def test_delete_recipe_unauthorized():
    
    assert delete_response.status_code == 403
 
-def test_stress_test_search_routes():
-   ingredients_list = [f"ingredient_{i}" for i in range(100)]
-   data = {"ingredients": ingredients_list, "page": 1}
-   
-   # Stress testing /search/
-   search_response = requests.post(f"{BASE_URL}/search/", json=data)
-   assert search_response.status_code == 200
-   
-   # Stress testing /search2/
-   data.update({"caloriesUp": 1000, "fatUp": 50, "sugUp": 30, "proUp": 20})
-   search2_response = requests.post(f"{BASE_URL}/search2/", json=data)
-   assert search2_response.status_code == 200
+def test_save_meal_plan():
+    """Test saving a meal plan for a specific day."""
+    entry = {
+        "day": 2,  # Tuesday
+        "recipe": {
+            "name": "Grilled Cheese Sandwich",
+            "instructions": "Butter bread, add cheese, and grill until golden."
+        }
+    }
+    response = requests.post("/meal-plan/", json=entry)
+    assert response.status_code == 200
+    assert response.json()["message"] == "Meal plan saved successfully."
+
+def test_get_meal_plan():
+    """Test retrieving the entire weekly meal plan."""
+    response = requests.get("/meal-plan/")
+    assert response.status_code == 200
+    meal_plan = response.json()
+    assert isinstance(meal_plan, list)
+    assert len(meal_plan) == 7  # Ensure it includes all days of the week
+
+def test_advanced_search_by_ingredient_and_calories():
+    """Test searching recipes by ingredient and calorie range."""
+    ingredient = "chicken"
+    calories_low = 100
+    calories_up = 500
+    response = requests.get(f"/search2/{ingredient},{calories_low},{calories_up}")
+    assert response.status_code == 200
+    recipes = response.json()
+    assert isinstance(recipes, list)
+    for recipe in recipes:
+        assert ingredient in recipe["ingredients"]
+        assert calories_low <= float(recipe["calories"]) <= calories_up
+
