@@ -35,10 +35,6 @@
 </div>
 <br><br>
 
-# New Demo!
-[![New Demo!](https://img.youtube.com/vi/IluD4IUT5kM/0.jpg)](https://youtu.be/fWfs_Mxc5CQ)
-
-
 <br><br>
 
 # 🍳 What is CookBook?  
@@ -101,12 +97,6 @@ CookBook isn’t just a tool—it’s your cooking companion, saving time and br
 # 🚀What's New?
 
 ## New features:
-- 🎤 **Voice-Guided Recipes**: Choose from multiple voices to guide you while you cook.  
-- 🖼️ **Personalized Themes**: Customize your CookBook experience with themes like *Midnight Chef* or *Literary Lemon*.  
-- 📝 **Printable Meal Plans**: Plan your meals for the week and print them for easy access.  
-- 🛒 **Smart Shopping Lists**: Automatically generate and export shopping lists as PDFs.  
-- 🍝 **Advanced Filters**: Search recipes by cuisine type, cooking time, or dietary preferences.  
-- 🤝 **Social Sharing**: Easily share recipes with friends via Discord, Slack, or social media.
 - ⭐ **Instant Recipe Favorites**: Save your top recipes instantly with a single click!
 - 🍽️ **Share Your Own Recipes**: Unleash your inner chef by adding your own recipes!
 - 🥗 **Smart AI Nutrition-Based Recipe Filtering**: Find the perfect recipe that fits your dietary needs with advanced nutrition-based filtering! 
@@ -115,7 +105,7 @@ With CookBook, cooking becomes an adventure. What will you create today? 🥘�
 ---
 ## 🎥 Demo Video  
 
-[![Watch the Demo](https://img.youtube.com/vi/Tk9iwPMeQhA/0.jpg)](https://youtu.be/Tk9iwPMeQhA)  
+[![New Demo!](https://img.youtube.com/vi/IluD4IUT5kM/0.jpg)](https://youtu.be/fWfs_Mxc5CQ)
 
 Click the image above to watch the demo video on YouTube! 🚀
 
