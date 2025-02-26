@@ -214,6 +214,37 @@ To set up the front end React app, do:
 
 # Examples
 
+## ✨ New Feature 5.0
+For feature 5.0, we wanted to do something different, something that helps people search new recipe faster, while at the same time add new recipes and if the user like the recipe, making it their personal favourite.
+
+### ⭐ Instant Recipe Favorites  
+Save your top recipes instantly with a single click! The **"Add to Favorites"** button allows users to quickly store their chosen recipes in a personalized favorites section, eliminating the hassle of endless scrolling. Effortlessly retrieve your saved recipes anytime, with the **favorites section** always available for easy access to your preferred culinary creations.
+
+![Favourite Recipe](image-5.png)
+
+![Favourite Click](image-6.png)
+
+### 🍽️ Share Your Own Recipes  
+Unleash your inner chef by adding your own recipes! Simply fill out a form with essential details, including **ingredients**, **cooking time**, **step-by-step instructions**, and **photos** for a complete recipe description. For easy organization and quick retrieval, assign **categories** and **tags** to your creations, making your personalized recipe collection easily accessible anytime.
+
+![Add Recipe](image-7.png)
+
+![Filled Recipe](image-8.png)
+
+![Success Recipe Add](image-10.png) ![Error Recipe Add](image-11.png)
+
+### 🥗 Smart AI Nutrition-Based Recipe Filtering  
+Find the perfect recipe that fits your dietary needs with **advanced nutrition-based filtering**! Easily filter recipes by **calories**, **protein**, **carbs**, and **fats**, setting specific nutritional criteria to match your health goals. Plus, let the **AI recommend personalized recipes** tailored to popular dietary plans like **keto**, **vegan**, **low-carb**, or **high-protein**, ensuring every meal aligns with your lifestyle.
+
+![AI image](image-12.png)
+
+![Filled form](image-13.png) ![resutl](image-14.png)
+
+
+
+The smart AI fills the nutrition filter for you.
+![Auto filled bar](image-15.png)
+
 ## ✨ New Functions 
 CookBook has been upgraded with exciting new features to make your cooking experience smarter, more interactive, and hassle-free! Below are the highlights of the latest functionalities added:
 ### 🎤 Multiple Voice-Guided Recipes  
@@ -354,6 +385,9 @@ Following extensions have to be added to you VS Code editor:
 }
 
 ```
+
+# Code Coverage for 5.0
+![code coverage image](image-16.png)
 
 # Code Coverage
 [Codecov](https://app.codecov.io/gh/yzhu27/CookBook)
