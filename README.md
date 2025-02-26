@@ -438,7 +438,7 @@ In case of any queries and for additional help, please email us at: help.cookboo
 # Support
 You can find the dataset used for this project [here](https://drive.google.com/file/d/12CZFb7Ugmiw9zQ7M_qpRsn7pmaV1zW0c/view?usp=sharing)
 ### 📊 Score Card for Version 5
-#### Total Grade: 
+#### Total Grade: 102/105
 
 |Notes|Evidence|Score|
 |-----|---------|--|
@@ -448,10 +448,10 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |Number of commits: by different people|in GH https://github.com/ncsugroup17/my-cookbook/graphs/contributors| 3
 |Issues reports: there are **many**| https://github.com/ncsugroup17/my-cookbook/issues | 3
 |Issues are being closed|evidence in GH https://github.com/ncsugroup17/my-cookbook/issues?q=is%3Aissue%20state%3Aclosed | 3
-|Docs: doco generated, format not ugly |in GH| |
-|Docs: what: point descriptions of each class/function (in isolation)| | |
-|Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z|doc page entries| | |
-|Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing| |
+|Docs: doco generated, format not ugly |in GH https://github.com/ncsugroup17/my-cookbook/tree/main/docs/api| 3|
+|Docs: what: point descriptions of each class/function (in isolation)| ![alt text](image-5.png) | 3 |
+|Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z|doc page entries (not sure what this asks for) | 0| |
+|Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing|Why write docs? Because every great recipe needs a story. Your API isn't just code—it's the secret sauce that powers your project. With pdoc, you can transform your Python scripts into a beautifully crafted cookbook of knowledge, ready to inspire collaboration and innovation. **Punchline**: Your code feeds the machine, but your docs feed the team. Let’s make them hungry to use it! | 3
 |Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.| https://youtu.be/fWfs_Mxc5CQ | 3
 |Use of version control tools|https://github.com/ncsugroup17/my-cookbook/network | 3
 |Test cases exist|dozens of tests and those test cases are more than 30% of the code base https://coveralls.io/github/ncsugroup17/my-cookbook?branch=main| 3 |
@@ -477,6 +477,7 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |Badges showing your syntax checkers. |config files iin  GH showing this checker's config, badges in README ![alt text](image-4.png) | 3|
 |Badges showing your code coverage tools|config files in GH, badges in README ![alt text](image-4.png)| 3 |
 |Badges showing any other Other automated analysis tools|config files in GH, badges in README ![alt text](image-4.png)| 3|
+
 
 ### 📊 Score Card
 #### Total Grade: 151
