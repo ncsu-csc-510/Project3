@@ -1,18 +1,20 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/Software-Engineering-2024-Group/my-cookbook/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Software-Engineering-2024-Group/my-cookbook/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/ncsugroup17/my-cookbook/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ncsugroup17/my-cookbook/actions/workflows/build.yml)
 [![DOI](https://zenodo.org/badge/888533527.svg)](https://doi.org/10.5281/zenodo.14200973)
-[![Repository size](https://img.shields.io/github/repo-size/Software-Engineering-2024-Group/my-cookbook)](https://github.com/Software-Engineering-2024-Group/my-cookbook)
+[![Repository size](https://img.shields.io/github/repo-size/ncsugroup17/my-cookbook)](https://github.com/ncsugroup17/my-cookbook)
 
-![Open Issues](https://img.shields.io/github/issues/Software-Engineering-2024-Group/my-cookbook)
-![Closed Issues](https://img.shields.io/github/issues-closed/Software-Engineering-2024-Group/my-cookbook)
-![Open Pull Requests](https://img.shields.io/github/issues-pr/Software-Engineering-2024-Group/my-cookbook)
-![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/Software-Engineering-2024-Group/my-cookbook)
+![Open Issues](https://img.shields.io/github/issues/ncsugroup17/my-cookbook)
+![Closed Issues](https://img.shields.io/github/issues-closed/ncsugroup17/my-cookbook)
+![Open Pull Requests](https://img.shields.io/github/issues-pr/ncsugroup17/my-cookbook)
+![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/ncsugroup17/my-cookbook)
 
-![AutoPEP8 Workflow](https://github.com/Software-Engineering-2024-Group/my-cookbook/actions/workflows/autopep8.yml/badge.svg)
-![Flake8 Workflow](https://github.com/Software-Engineering-2024-Group/my-cookbook/actions/workflows/flake8.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/Software-Engineering-2024-Group/my-cookbook/badge.svg?branch=main)](https://coveralls.io/github/Software-Engineering-2024-Group/my-cookbook?branch=main)
+![AutoPEP8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/autopep8.yml/badge.svg)
+![Flake8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/flake8.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/ncsugroup17/my-cookbook/badge.svg?branch=main)](https://coveralls.io/github/ncsugroup17/my-cookbook?branch=main)
+
 
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
