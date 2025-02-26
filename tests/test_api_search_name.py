@@ -126,3 +126,63 @@ def test_search_recipe_by_name_internal_error(setup_db):
 
     assert response.status_code == 500
     assert response.json()["detail"] == "An error occurred while searching for the recipe."
+
+def test_search_name_non_existent(setup_db):
+    """Test searching for a non-existent recipe."""
+    search_name = "Dragon Stew"
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([])  # Empty list means no results
+    setup_db["recipes"].aggregate.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get(f"/search-name/{search_name.replace(' ', '%20')}")
+
+    assert response.status_code == 500
+
+def test_search_name_special_characters(setup_db):
+    """Test searching for recipes with special characters in the name."""
+    search_name = "Pasta@123"
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([])  # Assuming no matches
+    setup_db["recipes"].aggregate.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get(f"/search-name/{search_name}")
+
+    assert response.status_code == 500
+    
+def test_search_name_empty(setup_db):
+    """Test searching for a recipe with an empty name."""
+    client = TestClient(app)
+    response = client.get("/search-name/")
+
+    assert response.status_code == 400  # Assuming API handles empty input
+    
+def test_search_name_valid(setup_db):
+    """Test searching for a recipe with a valid name."""
+    search_name = "Spaghetti Bolognese"
+    mocked_recipe = full_recipe_mock(ObjectId(), search_name)
+    expected_recipe = {**mocked_recipe, "_id": str(mocked_recipe["_id"])}
+
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([expected_recipe])
+    setup_db["recipes"].aggregate.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get(f"/search-name/{search_name.replace(' ', '%20')}")
+
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_search_name_non_existent(setup_db):
+    """Test searching for a non-existent recipe."""
+    search_name = "Dragon Stew"
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([])  # Empty list means no results
+    setup_db["recipes"].aggregate.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get(f"/search-name/{search_name.replace(' ', '%20')}")
+
+    assert response.status_code == 500

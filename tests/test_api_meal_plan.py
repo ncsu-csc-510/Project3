@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 import pytest
 from main import app
+from bson import ObjectId
 
 
 @pytest.fixture
@@ -89,3 +90,58 @@ def test_get_meal_plan_failure(setup_db):
 
     assert response.status_code == 500
     assert response.json()["detail"] == "An error occurred while retrieving the meal plan."
+
+def test_save_meal_plan():
+    """✅ Test saving a meal plan for a specific day."""
+    client = TestClient(app)
+    entry = {
+        "day": 2,  # Tuesday
+        "recipe": {
+            "name": "Grilled Cheese Sandwich",
+            "instructions": "Butter bread, add cheese, and grill until golden."
+        }
+    }
+    response = client.post("/meal-plan/", json=entry)
+    assert response.status_code == 200
+    assert response.json()["message"] == "Meal plan saved successfully."
+
+def test_advanced_search_by_ingredient_and_calories(setup_db):
+    """ Test searching recipes by ingredient and calorie range."""
+    ingredient = "chicken"
+    calories_low = 100
+    calories_up = 500
+
+    mocked_recipes = [
+        {"_id": str(ObjectId()), "name": "Grilled Chicken", "ingredients": ["chicken"], "calories": "300"},
+        {"_id": str(ObjectId()), "name": "Chicken Salad", "ingredients": ["chicken", "lettuce"], "calories": "200"}
+    ]
+
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter(mocked_recipes)
+    app.database["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get(f"/search2/{ingredient},{calories_low},{calories_up}")
+
+    assert response.status_code == 200
+    recipes = response.json()
+    assert isinstance(recipes, list)
+    for recipe in recipes:
+        assert ingredient in recipe["ingredients"]
+        assert calories_low <= float(recipe["calories"]) <= calories_up
+
+
+def test_advanced_search_valid_calorie_range(setup_db):
+    """ Test searching with an invalid calorie range."""
+    client = TestClient(app)
+    response = client.get("/search2/chicken,500,100")  
+    assert response.status_code == 200
+
+
+def test_advanced_search_no_results(setup_db):
+    """ Test searching with no matching results."""
+    app.database["recipes"].find.return_value.__iter__.return_value = iter([])  # No results
+    client = TestClient(app)
+    response = client.get("/search2/fish,100,300")
+    assert response.status_code == 200
+    assert response.json() == []  # Empty list when no matches
