@@ -452,7 +452,7 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |Docs: what: point descriptions of each class/function (in isolation)| | |
 |Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z|doc page entries| | |
 |Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing| |
-|Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.| |
+|Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.| https://youtu.be/fWfs_Mxc5CQ | 3
 |Use of version control tools|https://github.com/ncsugroup17/my-cookbook/network | 3
 |Test cases exist|dozens of tests and those test cases are more than 30% of the code base https://coveralls.io/github/ncsugroup17/my-cookbook?branch=main| 3 |
 |Test cases are routinely executed|E.g. travis-com.com or github actions or something https://github.com/ncsugroup17/my-cookbook/actions| 3 |
