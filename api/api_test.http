@@ -43,6 +43,10 @@ Content-Type: application/json
 GET http://localhost:8000/recipe/search-name/doesnotExist
 Content-Type: application/json
 
+### Meal plan 
+GET http://localhost:8000/meal-plan/
+Content-Type: application/json
+
 ### Delete a Recipe by ID
 DELETE http://localhost:8000/recipe/delete-recipe/0d204cef-365d-4edd-8071-d05f5bccdeab
 Content-Type: application/json
