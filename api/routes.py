@@ -70,21 +70,27 @@ async def get_meal_plan(request: Request):
     """Retrieves the meal plan for the week."""
     try:
         meal_plan = list(request.app.database["meal_plans"].find({}))
-        
-        # Convert ObjectId to string for JSON serialization
+
+        # Convert ObjectId to string
         for entry in meal_plan:
-            entry["_id"] = str(entry["_id"])  # Convert ObjectId to string
-        
-        # Fill in missing days with None if necessary
+            entry["_id"] = str(entry["_id"])
+
         complete_plan = [{day: None} for day in range(7)]
         for entry in meal_plan:
-            complete_plan[entry["day"]] = entry
+            day = entry.get("day")
+            if day is None or not isinstance(day, int) or day < 0 or day > 6:
+                print(f"Invalid or missing day field: {entry}")
+                continue
+            complete_plan[day] = entry
+
         return complete_plan
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while retrieving the meal plan."
+            detail=f"An error occurred while retrieving the meal plan. {str(e)}"
         )
+
 
 @router.get("/", response_description="List all recipes", response_model=List[Recipe])
 def list_recipes(request: Request):
