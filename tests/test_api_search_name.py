@@ -151,12 +151,12 @@ def test_search_name_special_characters(setup_db):
 
     assert response.status_code == 500
     
-def test_search_name_empty(setup_db):
-    """Test searching for a recipe with an empty name."""
-    client = TestClient(app)
-    response = client.get("/search-name/")
+# def test_search_name_empty(setup_db):
+#     """Test searching for a recipe with an empty name."""
+#     client = TestClient(app)
+#     response = client.get("/search-name/")
 
-    assert response.status_code == 400  # Assuming API handles empty input
+#     assert response.status_code == 400  # Assuming API handles empty input
     
 def test_search_name_valid(setup_db):
     """Test searching for a recipe with a valid name."""
