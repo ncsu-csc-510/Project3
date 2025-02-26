@@ -107,6 +107,9 @@ CookBook isn’t just a tool—it’s your cooking companion, saving time and br
 - 🛒 **Smart Shopping Lists**: Automatically generate and export shopping lists as PDFs.  
 - 🍝 **Advanced Filters**: Search recipes by cuisine type, cooking time, or dietary preferences.  
 - 🤝 **Social Sharing**: Easily share recipes with friends via Discord, Slack, or social media.
+- ⭐ **Instant Recipe Favorites**: Save your top recipes instantly with a single click!
+- 🍽️ **Share Your Own Recipes**: Unleash your inner chef by adding your own recipes!
+- 🥗 **Smart AI Nutrition-Based Recipe Filtering**: Find the perfect recipe that fits your dietary needs with advanced nutrition-based filtering! 
   
 With CookBook, cooking becomes an adventure. What will you create today? 🥘👨‍🍳👩‍🍳  
 ---
