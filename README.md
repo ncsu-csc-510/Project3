@@ -220,30 +220,30 @@ For feature 5.0, we wanted to do something different, something that helps peopl
 ### ⭐ Instant Recipe Favorites  
 Save your top recipes instantly with a single click! The **"Add to Favorites"** button allows users to quickly store their chosen recipes in a personalized favorites section, eliminating the hassle of endless scrolling. Effortlessly retrieve your saved recipes anytime, with the **favorites section** always available for easy access to your preferred culinary creations.
 
-![Favourite Recipe](image-17.png)
+![Favourite Recipe](images/image-17.png)
 
-![Favourite Click](image-6.png)
+![Favourite Click](images/image-6.png)
 
 ### 🍽️ Share Your Own Recipes  
 Unleash your inner chef by adding your own recipes! Simply fill out a form with essential details, including **ingredients**, **cooking time**, **step-by-step instructions**, and **photos** for a complete recipe description. For easy organization and quick retrieval, assign **categories** and **tags** to your creations, making your personalized recipe collection easily accessible anytime.
 
-![Add Recipe](image-7.png)
+![Add Recipe](images/image-7.png)
 
-![Filled Recipe](image-8.png)
+![Filled Recipe](images/image-8.png)
 
-![Success Recipe Add](image-10.png) ![Error Recipe Add](image-11.png)
+![Success Recipe Add](images/image-10.png) ![Error Recipe Add](images/image-11.png)
 
 ### 🥗 Smart AI Nutrition-Based Recipe Filtering  
 Find the perfect recipe that fits your dietary needs with **advanced nutrition-based filtering**! Easily filter recipes by **calories**, **protein**, **carbs**, and **fats**, setting specific nutritional criteria to match your health goals. Plus, let the **AI recommend personalized recipes** tailored to popular dietary plans like **keto**, **vegan**, **low-carb**, or **high-protein**, ensuring every meal aligns with your lifestyle.
 
-![AI image](image-12.png)
+![AI image](images/image-12.png)
 
-![Filled form](image-13.png) ![resutl](image-14.png)
+![Filled form](images/image-13.png) ![resutl](images/image-14.png)
 
 
 
 The smart AI fills the nutrition filter for you.
-![Auto filled bar](image-15.png)
+![Auto filled bar](images/image-15.png)
 
 ## ✨ New Functions 
 CookBook has been upgraded with exciting new features to make your cooking experience smarter, more interactive, and hassle-free! Below are the highlights of the latest functionalities added:
@@ -387,7 +387,7 @@ Following extensions have to be added to you VS Code editor:
 ```
 
 # Code Coverage for 5.0
-![code coverage image](image-16.png)
+![code coverage image](images/image-16.png)
 
 # Code Coverage
 [Codecov](https://app.codecov.io/gh/yzhu27/CookBook)
@@ -483,20 +483,20 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |Issues reports: there are **many**| https://github.com/ncsugroup17/my-cookbook/issues | 3
 |Issues are being closed|evidence in GH https://github.com/ncsugroup17/my-cookbook/issues?q=is%3Aissue%20state%3Aclosed | 3
 |Docs: doco generated, format not ugly |in GH https://github.com/ncsugroup17/my-cookbook/tree/main/docs/api| 3|
-|Docs: what: point descriptions of each class/function (in isolation)| ![alt text](image-5.png) | 3 |
+|Docs: what: point descriptions of each class/function (in isolation)| ![alt text](images/image-5.png) | 3 |
 |Docs: how: for common use cases X,Y,Z mini-tutorials showing worked examples on how to do X,Y,Z|doc page entries (not sure what this asks for) | 0| |
 |Docs: why: docs tell a story, motivate the whole thing, deliver a punchline that makes you want to rush out and use the thing|Why write docs? Because every great recipe needs a story. Your API isn't just code—it's the secret sauce that powers your project. With pdoc, you can transform your Python scripts into a beautifully crafted cookbook of knowledge, ready to inspire collaboration and innovation. **Punchline**: Your code feeds the machine, but your docs feed the team. Let’s make them hungry to use it! | 3
 |Docs: short video, animated, hosted on your repo. That convinces people why they want to work on your code.| https://youtu.be/fWfs_Mxc5CQ | 3
 |Use of version control tools|https://github.com/ncsugroup17/my-cookbook/network | 3
 |Test cases exist|dozens of tests and those test cases are more than 30% of the code base https://coveralls.io/github/ncsugroup17/my-cookbook?branch=main| 3 |
 |Test cases are routinely executed|E.g. travis-com.com or github actions or something https://github.com/ncsugroup17/my-cookbook/actions| 3 |
-|Issues are discussed before they are closed|even if you discuss in slack, need a sumamry statement here ![alt text](image.png)| 3 |
-|Chat channel: exists|Link or screenshots ![alt text](image-1.png)|3 |
+|Issues are discussed before they are closed|even if you discuss in slack, need a sumamry statement here ![alt text](images/image.png)| 3 |
+|Chat channel: exists|Link or screenshots ![alt text](images/image-1.png)|3 |
 |Test cases: a large proportion of the issues related to handling failing cases.|If a test case fails, open an issue and fix it https://github.com/ncsugroup17/my-cookbook/issues/12| 3 |
-|Evidence that the whole team is using the same tools: everyone can get to all tools and files| ![alt text](image-2.png) | 3
+|Evidence that the whole team is using the same tools: everyone can get to all tools and files| ![alt text](images/image-2.png) | 3
 |Evidence that the whole team is using the same tools (e.g. config files in the repo, updated by lots of different people)| Added to the packago.json https://github.com/ncsugroup17/my-cookbook/pull/1/files| 3
 |Evidence that the whole team is using the same tools (e.g. tutor can ask anyone to share screen, they demonstrate the system running on their computer)| Only Pratik and Meseker could run it | 3
-|Evidence that the members of the team are working across multiple places in the code base| We worked on backend APIs, frontend, and tests ![alt text](image-3.png)| 3
+|Evidence that the members of the team are working across multiple places in the code base| We worked on backend APIs, frontend, and tests ![alt text](images/image-3.png)| 3
 |Short release cycles | (hard to see in short projects) project members are committing often enough so that everyone can get your work our commit history https://github.com/ncsugroup17/my-cookbook/commits/main/| 3|
 |The file .gitignore lists what files should not be saved to the repo. See [examples]i(https://github.com/github/gitignore)|in GH (ROOT directory) | 3|
 |The file INSTALL.md lists how to install the code|in GH(Root directory)|3 |
@@ -505,12 +505,12 @@ but nevertheless, here is a track record that everyone is contributing a lot)|ev
 |The file CONTRIBUTING.md lists coding standards and lots of tips on how to extend the system without screwing things up; e.g. see [example](https://github.com/probot/template/blob/master/CONTRIBUTING.md)|in GH (root directory)|3 |
 |The file README.md contains all the following|in GH| 3|
 |Video|2min video of new functionality, showing a significant delta from prior. https://youtu.be/fWfs_Mxc5CQ| 3 |
-|DOI badge: exists. To get a Digitial Object Indentifier, regiser the project at [Zenodo](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content). DOI badges look like this: ![Zenodo doi badge](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.1234567-blue.svg) |in GH ![alt text](image-4.png)| 3 |
-|Badges showing your style checkers |config files in GH showing your config, badges in README ![alt text](image-4.png)| 3|
-|Badges showing your code formatters. |config files in GH showing your this formatter's  config, badges in README ![alt text](image-4.png)| 3|
-|Badges showing your syntax checkers. |config files iin  GH showing this checker's config, badges in README ![alt text](image-4.png) | 3|
-|Badges showing your code coverage tools|config files in GH, badges in README ![alt text](image-4.png)| 3 |
-|Badges showing any other Other automated analysis tools|config files in GH, badges in README ![alt text](image-4.png)| 3|
+|DOI badge: exists. To get a Digitial Object Indentifier, regiser the project at [Zenodo](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content). DOI badges look like this: ![Zenodo doi badge](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.1234567-blue.svg) |in GH ![alt text](images/image-4.png)| 3 |
+|Badges showing your style checkers |config files in GH showing your config, badges in README ![alt text](images/image-4.png)| 3|
+|Badges showing your code formatters. |config files in GH showing your this formatter's  config, badges in README ![alt text](images/image-4.png)| 3|
+|Badges showing your syntax checkers. |config files iin  GH showing this checker's config, badges in README ![alt text](images/image-4.png) | 3|
+|Badges showing your code coverage tools|config files in GH, badges in README ![alt text](images/image-4.png)| 3 |
+|Badges showing any other Other automated analysis tools|config files in GH, badges in README ![alt text](images/image-4.png)| 3|
 
 
 ### 📊 Score Card
