@@ -361,6 +361,32 @@ In case of any queries and for additional help, please email us at: help.cookboo
 
 # Meet the Team
 
+## Version 5
+<center>
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/SyntaxErrorThapa">
+          <img src="https://avatars.githubusercontent.com/u/125596457?v=4" width="100px;" alt="Pratik Thapa"/><br />
+          <sub><b>Pratik Thapa</b></sub>
+        </a><br />
+      </td>
+      <td align="center">
+        <a href="https://github.com/MesekerWK">
+          <img src="https://avatars.githubusercontent.com/u/63201911?v=4" width="100px;" alt="Meseker Worku Kebede"/><br />
+          <sub><b>Meseker Worku Kebede</b></sub>
+        </a><br />
+      </td>
+      <td align="center">
+        <a href="https://github.com/ONeal2467">
+          <img src="https://avatars.githubusercontent.com/u/89427296?v=4" width="100px;" alt="O'Neal M'Beri"/><br />
+          <sub><b>O'Neal M'Beri</b></sub>
+        </a><br />
+      </td>
+    </tr>
+  </table>
+</center>
+
 ## Version 4
 <center>
   <table>
