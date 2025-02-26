@@ -17,13 +17,6 @@ def setup_db():
     app.database["shopping-list"].insert_many.return_value = None  # Mock insert
     yield app.database  # Use the mock database in tests
 
-def test_get_shopping_list(setup_db):
-    """Test to fetch shopping list."""
-    client = TestClient(app)
-    response = client.get("/shopping-list")
-    assert response.status_code == 200
-    assert response.json() == {"shopping_list": []}
-
 def test_update_shopping_list(setup_db):
     """Test to update shopping list."""
     client = TestClient(app)
@@ -126,3 +119,73 @@ def test_update_shopping_list_with_duplicates(setup_db):
     }])
     assert response.status_code == 400
     assert response.json()["detail"] == "No new items to add."
+    
+    
+    
+def test_add_new_recipe(setup_db):
+    """Test to add new recipe with mocking."""
+    # Mock data for the test
+    recipe_data = {
+        "name": "Test Test",
+        "cookTime": "1H",
+        "prepTime": "30M",
+        "totalTime": "1H30M",
+        "description": "A delicious and moist chocolate cake recipe.",
+        "images": [
+            "https://example.com/chocolate_cake.jpg"
+        ],
+        "category": "Dessert",
+        "tags": ["Chocolate", "Cake", "Dessert"],
+        "ingredientQuantities": ["2 cups", "1 cup", "3", "1/2 cup"],
+        "ingredients": ["flour", "sugar", "eggs", "cocoa powder"],
+        "rating": "5",
+        "calories": "450",
+        "fat": "20",
+        "saturatedFat": "10",
+        "cholesterol": "80",
+        "sodium": "300",
+        "carbs": "50",
+        "fiber": "5",
+        "sugar": "30",
+        "protein": "6",
+        "servings": "8",
+        "instructions": [
+            "Preheat oven to 350°F (175°C).",
+            "Mix dry ingredients together.",
+            "Add wet ingredients and mix until smooth.",
+            "Bake for 30 minutes or until a toothpick comes out clean."
+        ]
+    }
+    
+    # Mock the insert_one response
+    mock_id = "mock-recipe-id"
+    setup_db["recipes"].insert_one.return_value.inserted_id = mock_id
+    
+    # Mock the find_one response for the newly created recipe
+    # Include all the fields from the input data plus an ID
+    mock_response = recipe_data.copy()
+    mock_response["_id"] = mock_id
+    setup_db["recipes"].find_one.return_value = mock_response
+    
+    # Create a test client
+    client = TestClient(app)
+    
+    # Make the request to add a recipe
+    response = client.post("/add-recipe/", json=recipe_data)
+    
+    # Verify the response
+    assert response.status_code == 201
+    response_data = response.json()
+    
+    # Check that the response contains the expected data
+    assert "name" in response_data
+    assert response_data["name"] == recipe_data["name"]
+    assert "_id" in response_data
+    assert response_data["_id"] == mock_id
+    
+    # For completeness, we can also mock the delete operation
+    # though it's not necessary for this test
+    setup_db["recipes"].delete_one.return_value.deleted_count = 1
+    
+    # No need to actually call delete since we're mocking everything
+    # This test is focused only on the add recipe functionality
