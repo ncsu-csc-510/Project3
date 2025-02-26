@@ -696,11 +696,9 @@ style={{
 
 const RecipeInformation = () => {
   return (
-    <Router>
     <Provider store={store}>
       <RecipeInformationWrapped />
     </Provider>
-    </Router>
   )
 }
 
