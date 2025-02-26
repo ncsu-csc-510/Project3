@@ -89,8 +89,16 @@ async def get_meal_plan(request: Request):
 @router.get("/", response_description="List all recipes", response_model=List[Recipe])
 def list_recipes(request: Request):
     """Returns a list of 10 recipes"""
+    recipes = list(request.app.database["recipes"].find().limit(10))
+    for recipe in recipes:
+        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
+    return recipes
+
+@router.get("/{id}", response_description="Get a recipe by id", response_model=Recipe)
+def find_recipe(id: str, request: Request):
+    """Finds a recipe mapped to the provided ID"""
     try:
-        object_id = ObjectId(id)
+        object_id = ObjectId(id)  # ✅ Validate & convert to ObjectId
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid ID format")
 
@@ -98,13 +106,7 @@ def list_recipes(request: Request):
     if recipe is not None:
         recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to str
         return recipe
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Recipe with ID {id} not found")
 
-@router.get("/{id}", response_description="Get a recipe by id", response_model=Recipe)
-def find_recipe(id: str, request: Request):
-    """Finds a recipe mapped to the provided ID"""
-    if (recipe := request.app.database["recipes"].find_one({"_id": id})) is not None:
-        return recipe
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Recipe with ID {id} not found")
 
 @router.get("/search/{ingredient}", response_description="List all recipes with the given ingredient", response_model=List[Recipe])
