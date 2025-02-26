@@ -191,4 +191,149 @@ def test_search_recipes_by_multiple_ingredients_missing_field(setup_db):
     payload = {"page": 1}  # Missing 'ingredients'
     response = client.post("/recipe/search/", json=payload)
 
-    assert response.status_code == 422  # Validation error for missing required field
+    assert response.status_code == 422  
+
+def test_get_single_ingredient_recipes_success(setup_db):
+    """Test retrieving recipes by a single ingredient successfully."""
+    mocked_recipes = [
+        full_recipe_mock(ObjectId(), "Garlic Bread", ["flour", "garlic", "butter"]),
+        full_recipe_mock(ObjectId(), "Garlic Shrimp", ["shrimp", "garlic", "lemon"])
+    ]
+
+    cursor_mock = MagicMock()
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter(mocked_recipes)
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search/garlic")
+
+    expected = [{**recipe, "_id": str(recipe["_id"])} for recipe in mocked_recipes]
+
+    assert response.status_code == 200
+    assert response.json() == expected
+    setup_db["recipes"].find.assert_called_once_with({"ingredients": {"$in": ["garlic"]}})
+
+
+def test_get_single_ingredient_recipes_no_results(setup_db):
+    """Test retrieving recipes when no results match the given ingredient."""
+    setup_db["recipes"].find.return_value.__iter__.return_value = iter([])
+
+    client = TestClient(app)
+    response = client.get("/recipe/search/basil")
+
+    assert response.status_code == 200
+    assert response.json() == []
+    setup_db["recipes"].find.assert_called_once_with({"ingredients": {"$in": ["basil"]}})
+
+
+def test_get_single_ingredient_case_insensitive(setup_db):
+    """Test searching with case-insensitive ingredient names."""
+    mocked_recipe = full_recipe_mock(str(ObjectId()), "Basil Pesto Pasta", ["basil", "pasta", "olive oil"])
+
+    cursor_mock = MagicMock()
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter([mocked_recipe])
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search/BASIL")
+
+    expected = [{**mocked_recipe, "_id": str(mocked_recipe["_id"])}]
+
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+# ----------------------------------------------
+# ✅ NEW TEST CASES FOR POST /recipe/search/ (Multiple Ingredients)
+# ----------------------------------------------
+
+def test_post_multiple_ingredients_search_success(setup_db):
+    """Test searching recipes by multiple ingredients with successful results."""
+    mocked_recipes = [
+        full_recipe_mock(ObjectId(), "Avocado Toast", ["bread", "avocado", "egg"]),
+        full_recipe_mock(ObjectId(), "Avocado Smoothie", ["avocado", "banana", "milk"])
+    ]
+
+    cursor_mock = MagicMock()
+    cursor_mock.sort.return_value = cursor_mock
+    cursor_mock.skip.return_value = cursor_mock
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter(mocked_recipes)
+
+    setup_db["recipes"].find.return_value = cursor_mock
+    setup_db["recipes"].count_documents.return_value = 2
+
+    client = TestClient(app)
+    payload = {"ingredients": ["avocado"], "page": 1}
+    response = client.post("/recipe/search/", json=payload)
+
+    expected = {
+        "recipes": [{**recipe, "_id": str(recipe["_id"])} for recipe in mocked_recipes],
+        "page": 1,
+        "count": 2
+    }
+
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+def test_post_multiple_ingredients_pagination_success(setup_db):
+    """Test pagination functionality with multiple ingredients."""
+    mocked_recipes = [
+        full_recipe_mock(ObjectId(), "Omelette", ["egg", "cheese"]),
+        full_recipe_mock(ObjectId(), "Scrambled Eggs", ["egg", "butter"])
+    ]
+
+    cursor_mock = MagicMock()
+    cursor_mock.sort.return_value = cursor_mock
+    cursor_mock.skip.return_value = cursor_mock
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter(mocked_recipes)
+    setup_db["recipes"].find.return_value = cursor_mock
+    setup_db["recipes"].count_documents.return_value = 10  # Total recipes = 10
+
+    client = TestClient(app)
+    payload = {"ingredients": ["egg", "cheese"], "page": 2}
+    response = client.post("/recipe/search/", json=payload)
+
+    expected = {
+        "recipes": [{**recipe, "_id": str(recipe["_id"])} for recipe in mocked_recipes],
+        "page": 2,
+        "count": 10
+    }
+
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+def test_post_multiple_ingredients_invalid_payload_type(setup_db):
+    """Test invalid data type for ingredients field in payload."""
+    client = TestClient(app)
+    payload = {"ingredients": "avocado"}  # Should be a list, not string
+    response = client.post("/recipe/search/", json=payload)
+
+    assert response.status_code == 422  # Unprocessable entity due to validation error
+
+
+def test_post_multiple_ingredients_missing_field(setup_db):
+    """Test missing 'ingredients' field in the request payload."""
+    client = TestClient(app)
+    payload = {"page": 1}  # Missing 'ingredients'
+    response = client.post("/recipe/search/", json=payload)
+
+    assert response.status_code == 422  # Validation error for missing field
+
+
+def test_post_multiple_ingredients_empty_list(setup_db):
+    """Test searching with an empty ingredients list in the payload."""
+    client = TestClient(app)
+    payload = {"ingredients": [], "page": 1}  # Empty list should return empty results
+    response = client.post("/recipe/search/", json=payload)
+
+    assert response.status_code == 200
+    assert response.json() == {"recipes": [], "page": 1, "count": 0}
+
+    
+    
