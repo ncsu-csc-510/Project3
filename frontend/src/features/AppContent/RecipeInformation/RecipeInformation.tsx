@@ -206,7 +206,7 @@ const RecipeInformationWrapped = () => {
   }, [])
 
   if (recipeInfo.isGetRecipeInfoLoading) {
-     <div data-testid="loading-spinner"> Loading ... </div>
+    return <div data-testid="loading-spinner"> Loading ... </div>
   }  else if (recipeInfo.isGetRecipeInfoError) {
     return <div data-testid="error-message">Failed to load recipe data</div>;
   } else if (recipeInfo.isGetRecipeInfoSuccess) {
