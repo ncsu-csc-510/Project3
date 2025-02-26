@@ -20,6 +20,8 @@ from pydantic import BaseModel, conint, conlist, PositiveInt
 import logging
 from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery
 from uuid import uuid4
+from bson import ObjectId
+
 # from models import User
 # from models import User
 
@@ -87,14 +89,24 @@ async def get_meal_plan(request: Request):
 @router.get("/", response_description="List all recipes", response_model=List[Recipe])
 def list_recipes(request: Request):
     """Returns a list of 10 recipes"""
-    recipes = list(request.app.database["recipes"].find(limit=10))
+    recipes = list(request.app.database["recipes"].find().limit(10))
+    for recipe in recipes:
+        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
     return recipes
 
 @router.get("/{id}", response_description="Get a recipe by id", response_model=Recipe)
 def find_recipe(id: str, request: Request):
     """Finds a recipe mapped to the provided ID"""
-    if (recipe := request.app.database["recipes"].find_one({"_id": id})) is not None:
+    try:
+        object_id = ObjectId(id)  # ✅ Validate & convert to ObjectId
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    recipe = request.app.database["recipes"].find_one({"_id": object_id})
+    if recipe is not None:
+        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to str
         return recipe
+
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Recipe with ID {id} not found")
 
 @router.get("/search/{ingredient}", response_description="List all recipes with the given ingredient", response_model=List[Recipe])
@@ -155,8 +167,6 @@ def list_recipes_by_ingregredient(ingredient: str, caloriesLow: int, caloriesUp:
     res.sort(key = lambda x: x['calories'])
     return res
 
-
-
 @router.post("/recommend-recipes/", response_model=dict)
 async def recommend_recipes(query: RecipeQuery = Body(...)):
     try:
@@ -192,7 +202,9 @@ async def recommend_recipes(query: RecipeQuery = Body(...)):
 @router.post("/add-recipe/", response_description="Add a new recipe to the database", status_code=201, response_model=Recipe)
 async def add_new_recipe(recipe: Recipe, request: Request):
     """Adds a new recipe to the database with an auto-generated ID."""
-    
+    if not recipe.name or not recipe.category or not recipe.ingredients:
+        raise HTTPException(status_code=400, detail="Required fields missing")
+
     required_fields = {
             "name": recipe.name,
             "category": recipe.category,
@@ -267,26 +279,6 @@ async def search_recipe_by_name(name: str, request: Request):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail=f"An error occurred while searching for the recipe."
-        )
-        
-@router.delete("/delete-recipe/{recipe_id}", response_description="Delete a recipe by ID", status_code=200)
-async def delete_recipe(recipe_id: str, request: Request):
-    """Deletes a recipe from the database by its ID"""
-    try:
-        result = request.app.database["recipes"].delete_one({"_id": recipe_id})
-        
-        # Check if a recipe was deleted
-        if result.deleted_count == 1:
-            return {"message": f"Recipe with ID {recipe_id} has been deleted successfully."}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
-                detail=f"Recipe with ID {recipe_id} not found"
-            )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"An error occured while deleting the recipe."
         )
         
 @router.post("/nutrition-chatbot/", response_description="Get personalized nutrition recommendations", status_code=200)

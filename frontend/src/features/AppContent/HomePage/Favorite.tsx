@@ -118,7 +118,7 @@ const Favorites: React.FC = () => {
                 </CardContent>
             </CardActionArea>
               <CardActions sx={{ display: "flex", justifyContent: "center" }}>
-                <IconButton color="error" onClick={(e) => {
+                <IconButton color="error" aria-label="close" onClick={(e) => {
                   e.stopPropagation();
                   if (window.confirm("Are you sure you want to remove this recipe from your favorites?")) {
                     const updatedFavorites = favorites.filter(fav => fav._id !== recipe._id);

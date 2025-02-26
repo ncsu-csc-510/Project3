@@ -9,15 +9,21 @@ this file. If not, please write to: help.cookbook@gmail.com
 */
 
 import React from 'react';
-import { getByDisplayValue, getByLabelText, getByTitle, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import Header from './Header';
+import { ThemeProvider } from '../Themes/themeContext'; // Adjust the import path if needed
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(<ThemeProvider>{ui}</ThemeProvider>);
+};
 
 test('shows header correctly', () => {
-  const {getByText} = render(<Header />);
-  expect(getByText("CookBook")).toBeInTheDocument();
+  const { getByText } = renderWithProviders(<Header />);
+  expect(getByText("Cook Book")).toBeInTheDocument();
 });
 
-test('has navbar component ', () => {
-    const {getByTestId} = render(<Header />);
-    expect(getByTestId("nav-comp-43")).toBeInTheDocument();
+test('has navbar component', () => {
+  const { getByTestId } = renderWithProviders(<Header />);
+  expect(getByTestId("nav-comp-43")).toBeInTheDocument();
 });
+
