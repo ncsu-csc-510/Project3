@@ -21,9 +21,7 @@ import logging
 from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery
 from uuid import uuid4
 from bson import ObjectId
-
-# from models import User
-# from models import User
+from models import User, UserLogin
 
 load_dotenv()  # Load environment variables
 app = FastAPI()
@@ -333,4 +331,37 @@ async def get_nutrition_recommendations(query: NutritionQuery, request: Request)
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while generating recommendations: {str(e)}"
         )
-        
+
+@router.post("/user/signup")
+async def user_signup(user: User, request: Request):
+    db = request.app.mongodb_client[os.getenv("DB_NAME")]
+    if db.users.find_one({"email": user.email}):
+        raise HTTPException(status_code=400, detail="User already exists")
+    result = db.users.insert_one(user.dict())
+    return {"id": str(result.inserted_id), "email": user.email, "name": user.name}
+
+@router.post("/user/login")
+async def user_login(credentials: UserLogin, request: Request):
+    db = request.app.database  # Ensure you're using the same DB instance as signup
+    db_user = db.users.find_one({"email": credentials.email})
+    if not db_user or db_user["password"] != credentials.password:
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    return {"id": str(db_user["_id"]), "name": db_user["name"], "email": db_user["email"]}
+
+@router.get("/user/profile")
+async def get_user_profile(email: str, request: Request):
+    """
+    Fetches a user profile by email.
+    Expect the client to supply the email as a query parameter.
+    """
+    db = request.app.database  # or request.app.mongodb_client[os.getenv("DB_NAME")]
+    user = db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # include an optional field if profilePhoto exists
+    return {
+        "id": str(user["_id"]),
+        "name": user["name"],
+        "email": user["email"],
+        "profilePhoto": user.get("profilePhoto", "")
+    }

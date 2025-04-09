@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -7,22 +8,20 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
-  // Fetch saved email and password from localStorage
-  const savedEmail = localStorage.getItem('userEmail');
-  const savedPassword = localStorage.getItem('userPassword');
-
-  const handleLogin = () => {
-    // Compare entered email and password with saved ones
-    if (savedEmail === email && savedPassword === password) {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/user/login', { email, password });
+      // Optionally store user info locally, e.g., in context or state
       alert('Login successful!');
       navigate('/profile'); // Redirect to profile page
-    } else {
-      setError('Incorrect email or password');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Login failed');
     }
   };
 
   return (
-    <div>
+    <form onSubmit={handleLogin}>
       <h2>Login</h2>
       <div>
         <input
@@ -41,9 +40,9 @@ const Login: React.FC = () => {
         />
       </div>
       {error && <p>{error}</p>}
-      <button onClick={handleLogin}>Login</button>
+      <button type="submit">Login</button>
       <p>Don't have an account? <a href="/signup">Signup here</a></p>
-    </div>
+    </form>
   );
 };
 

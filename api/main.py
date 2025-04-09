@@ -50,7 +50,7 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_db_client():
     """Initializes the database client when the application starts"""
-    app.mongodb_client = MongoClient(config["ATLAS_URI"], tlsCAFile = ca)
+    app.mongodb_client = MongoClient(config["ATLAS_URI"], tlsCAFile=ca)
     app.database = app.mongodb_client[config["DB_NAME"]]
 
 
