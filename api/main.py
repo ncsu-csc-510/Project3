@@ -18,8 +18,11 @@ from typing import List
 import sys
 import os
 import certifi
+from dotenv import load_dotenv
 
 sys.path.insert(0, '../')
+
+load_dotenv()
 
 app = FastAPI()
 app.include_router(router) 

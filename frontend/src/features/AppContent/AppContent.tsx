@@ -14,6 +14,7 @@ this file. If not, please write to: help.cookbook@gmail.com
  * particular route
  * @author Priyanka Ambawane - dearpriyankasa@gmail.com
  */
+import React from 'react';
 import { Routes, Route } from 'react-router-dom'
 import HomePage from './HomePage/HomePage'
 import About from './HomePage/AboutPage'
