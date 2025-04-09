@@ -26,11 +26,11 @@
     "react-icons": "^4.0.0",
     "react-redux": "^8.0.4",
     "react-router-dom": "^6.4.1",
-    "react-scripts": "^5.0.1",
+    "react-scripts": "^3.0.1",
     "redux": "^4.2.0",
     "redux-mock-store": "^1.5.5",
     "redux-saga": "^1.2.1",
-    "sweetalert2": "^11.17.2",
+    "sweetalert2": "^11.6.13",
     "typescript": "^4.8.3",
     "web-vitals": "^2.1.4",
     "webpack-manifest-plugin": "^5.0.0"
@@ -57,12 +57,12 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^27.5.1",
     "jest-canvas-mock": "^2.5.2",
-    "jspdf": "^2.5.2",
+    "jspdf": "^3.0.1",
     "prettier": "2.2.1",
     "ts-jest": "^29.2.6"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
