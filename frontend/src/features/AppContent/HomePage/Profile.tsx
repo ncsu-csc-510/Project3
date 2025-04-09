@@ -1,18 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./Profile.css"; // Optional, for styling
 
+interface ProfileData {
+  name: string;
+  email: string;
+  profilePhoto: string;
+}
+
 const Profile: React.FC = () => {
-  // Sample user details
-  const [userData, setUserData] = useState({
-    name: localStorage.getItem('userName') ?? "Test User",
-    email: localStorage.getItem('userEmail') ?? "test@ncsu.edu",
-    profilePhoto: localStorage.getItem("profilePhoto") ?? "" , // URL or path to profile image
+  // Initialize state with empty values
+  const [userData, setUserData] = useState<ProfileData>({
+    name: "",
+    email: "",
+    profilePhoto: "",
   });
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // State for file input (photo upload)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Function to fetch profile from the backend
+  const fetchProfile = async () => {
+    try {
+      // Assume you've stored the email during login
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) {
+        throw new Error("No user email found. Please log in.");
+      }
+      const response = await axios.get("http://127.0.0.1:8000/user/profile", {
+        params: { email: userEmail },
+      });
+      setUserData(response.data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Handle file input changes (when user selects a photo)
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  // Handle file input changes (photo upload)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -20,14 +48,15 @@ const Profile: React.FC = () => {
       reader.readAsDataURL(file); // Convert to Base64
       reader.onload = () => {
         const base64String = reader.result as string;
-        setUserData((prev) => ({
-          ...prev,
-          profilePhoto: base64String,
-        }));
-        localStorage.setItem("profilePhoto", base64String); // Save to localStorage
+        // Optionally update the backend with the new profile photo
+        setUserData((prev) => ({ ...prev, profilePhoto: base64String }));
+        // For now, store locally if needed
+        localStorage.setItem("profilePhoto", base64String);
       };
     }
   };
+
+  if (loading) return <p>Loading profile...</p>;
 
   return (
     <div className="profile-container" style={{ padding: "20px", textAlign: "center" }}>
