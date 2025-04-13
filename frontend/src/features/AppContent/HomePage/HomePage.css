@@ -32,6 +32,11 @@ this file. If not, please write to: help.cookbook@gmail.com
   font-weight: 600;
 }
 
+.email-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
 .faq {
   font-family: 'RobotoThin', Arial, sans-serif;
   color: white;

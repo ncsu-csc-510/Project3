@@ -14,7 +14,6 @@ this file. If not, please write to: help.cookbook@gmail.com
  */
 
 import * as ACTION_TYPES from './getTagList.actionTypes'
-import {initiateGetTagListRequest} from "./getTags.saga";
 
 export const getTagListInitiator = (apiURL: string, body: any) => {
   return {

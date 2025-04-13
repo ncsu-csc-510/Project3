@@ -1,3 +1,5 @@
+import React from 'react';
+
 /*
 
 Copyright (C) 2022 SE CookBook - All Rights Reserved
@@ -15,7 +17,6 @@ this file. If not, please write to: help.cookbook@gmail.com
  * Header and Search component remain static and app contents change according to the state of the application
  * @author Priyanka Ambawane - dearpriyankasa@gmail.com
  */
-import React from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import applicationStore from './store';
@@ -26,8 +27,6 @@ import AppContent from './features/AppContent/AppContent';
 import GetTags from './features/AppContent/Tag/GetTags';
 import CustomizedAccordions from './features/AppContent/NutritionFilter/CustomizedAccordions';
 import { ThemeProvider, useTheme } from './features/Themes/themeContext';
-import Login from "./features/AppContent/HomePage/Login"; 
-import Profile from "./features/AppContent/HomePage/Profile";
 
 const store = applicationStore();
 

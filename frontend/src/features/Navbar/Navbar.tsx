@@ -1,3 +1,5 @@
+import React from 'react'
+
 /*
 
 Copyright (C) 2022 SE CookBook - All Rights Reserved
@@ -7,8 +9,6 @@ You should have received a copy of the MIT license with
 this file. If not, please write to: help.cookbook@gmail.com
 
 */
-
-import React from 'react'
 
 import './Navbar.css'
 import { useTheme } from '../Themes/themeContext'
