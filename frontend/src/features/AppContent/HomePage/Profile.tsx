@@ -85,10 +85,24 @@ const Profile: React.FC = () => {
       });
       
       // Update with any additional data from the backend
-      setUserData(prev => ({
-        ...prev,
-        ...response.data
-      }));
+      if (response.data) {
+        // Ensure numeric fields are properly converted
+        const profileData = {
+          ...response.data,
+          age: Number(response.data.age) || 0,
+          weight: Number(response.data.weight) || 0,
+          height: Number(response.data.height) || 0,
+          goalWeight: Number(response.data.goalWeight) || 0,
+          dietaryRestrictions: Array.isArray(response.data.dietaryRestrictions) 
+            ? response.data.dietaryRestrictions 
+            : []
+        };
+        
+        setUserData(prev => ({
+          ...prev,
+          ...profileData
+        }));
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {

@@ -18,17 +18,18 @@ from pydantic import BaseModel, EmailStr
 
 class Recipe(BaseModel):
     """A data model representing a recipe"""
-    id: str = Field(default_factory=uuid.uuid4,
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()),
                     alias="_id")  # Unique identifier for the recip
+    userId: Optional[str] = None  # ID of the user who created the recipe
     name: str  # Name of the recipe Required
     cookTime: Optional[str] = None
     prepTime: Optional[str] = None
     totalTime: Optional[str] = None
     description: Optional[str] = None
-    images: Optional[list] = None  # URLs of images related to the recipe
+    images: Optional[List[str]] = Field(default_factory=list)  # URLs of images related to the recipe
     category: str # Required
-    tags: List[str] 
-    ingredientQuantities: list 
+    tags: List[str] = Field(default_factory=list)
+    ingredientQuantities: List[str] = Field(default_factory=list)
     ingredients: List[str]  # Required
     rating: Optional[str] = None
     calories: Optional[str] = None
@@ -41,13 +42,14 @@ class Recipe(BaseModel):
     sugar: Optional[str] = None
     protein: Optional[str] = None
     servings: Optional[str] = None
-    instructions: List[str] # Required
+    instructions: List[str] = Field(default_factory=list) # Required
 
     class Config:
         schema_extra = {
 
             "example": {
                 "id": "abcd-efgh-jklm-nopq-rstuv",
+                "userId": "user123",
                 "name": "Low-Fat Berry Blue Frozen Dessert",
                 "cookTime": "24H",
                 "prepTime": "45M",
@@ -126,15 +128,16 @@ class RecipeListResponse(BaseModel):
 
 
 class RecipeListRequest2(BaseModel):
+    email: EmailStr = Field(..., description="User's email")
     page: int = Field(..., ge=1, description="Page number, must be at least 1")
     caloriesUp: float = Field(..., ge=0, le=4000,
-                              description="Calories upper limit, between 0 and 100")
+                              description="Calories upper limit, between 0 and 4000")
     fatUp: float = Field(..., ge=0, le=140,
-                         description="Fat upper limit, between 0 and 100")
+                         description="Fat upper limit, between 0 and 140")
     sugUp: float = Field(..., ge=0, le=150,
-                         description="Sugar upper limit, between 0 and 100")
+                         description="Sugar upper limit, between 0 and 150")
     proUp: float = Field(..., ge=0, le=250,
-                         description="Protein upper limit, between 0 and 100")
+                         description="Protein upper limit, between 0 and 250")
 
 
 class RecipeQuery(BaseModel):

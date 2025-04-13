@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react'
-
-/*
-
-Copyright (C) 2022 SE CookBook - All Rights Reserved
-You may use, distribute and modify this code under the
-terms of the MIT license.
-You should have received a copy of the MIT license with
-this file. If not, please write to: help.cookbook@gmail.com
-
-*/
-
+import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import StarIcon from '@mui/icons-material/Star'
@@ -50,6 +40,14 @@ interface RecipeListData {
   rating: string
 }
 
+interface Recipe {
+  _id: string
+  name: string
+  description: string
+  category: string
+  images: string[]
+}
+
 const RecipeList = () => {
   const { theme } = useTheme()
 
@@ -66,6 +64,7 @@ const RecipeList = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedCookTime, setSelectedCookTime] = useState<string>('')
   const [hidden, setHidden] = useState<boolean>(false)
+  const [recipes, setRecipes] = useState<Recipe[]>([])
 
   const getRecipeListState = useSelector(
     (state: any) => state.getRecipeListAppState
@@ -86,6 +85,28 @@ const RecipeList = () => {
       return 0
     }
   }
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const userEmail = localStorage.getItem('userEmail')
+        if (!userEmail) {
+          navigateTo('/login')
+          return
+        }
+
+        const response = await axios.get(`http://localhost:8000/recipes?email=${userEmail}`)
+        setRecipes(response.data)
+      } catch (error) {
+        console.error('Error fetching recipes:', error)
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          navigateTo('/login')
+        }
+      }
+    }
+
+    fetchRecipes()
+  }, [navigateTo])
 
   useEffect(() => {
     let recipes = getRecipeListState.getRecipeListData['recipes']

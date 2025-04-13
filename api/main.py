@@ -10,7 +10,7 @@ this file. If not, please write to: help.cookbook@gmail.com
 
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI, HTTPException
 from models import ShoppingListItem
 from bson import ObjectId
@@ -48,14 +48,14 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-def startup_db_client():
+async def startup_db_client():
     """Initializes the database client when the application starts"""
-    app.mongodb_client = MongoClient(config["ATLAS_URI"], tlsCAFile=ca)
+    app.mongodb_client = AsyncIOMotorClient(config["ATLAS_URI"], tlsCAFile=ca)
     app.database = app.mongodb_client[config["DB_NAME"]]
 
 
 @app.on_event("shutdown")
-def shutdown_db_client():
+async def shutdown_db_client():
     """Closes the database client when the application shuts down"""
     app.mongodb_client.close()
 
@@ -69,10 +69,10 @@ app.include_router(router, tags=["recipes"], prefix="/recipe")
 async def get_shopping_list():
     """Fetches the shopping list from the database or returns an empty list"""
     collection_name = "shopping-list"
-    if collection_name not in app.database.list_collection_names():
-        app.database.create_collection(collection_name)
+    if collection_name not in await app.database.list_collection_names():
+        await app.database.create_collection(collection_name)
 
-    shopping_list = list(app.database[collection_name].find())
+    shopping_list = await app.database[collection_name].find().to_list(length=None)
     shopping_list = [{**item, "_id": str(item["_id"])}
                      for item in shopping_list]
 
@@ -86,36 +86,68 @@ async def update_shopping_list(items: List[ShoppingListItem]):
     Ensures no duplicate items are added.
     """
     collection_name = "shopping-list"
-    if collection_name not in app.database.list_collection_names():
-        app.database.create_collection(collection_name)
+    if collection_name not in await app.database.list_collection_names():
+        await app.database.create_collection(collection_name)
 
     collection = app.database[collection_name]
 
     # Fetch existing items from the database
-    existing_items = list(collection.find())
+    existing_items = await collection.find().to_list(length=None)
     existing_items_dict = {
         (item["name"], item["unit"]): item for item in existing_items
     }
 
-    # Filter new items to avoid duplicates based on 'name' and 'unit'
-    new_items = [
-        {"name": item.name, "quantity": item.quantity,
-            "unit": item.unit, "checked": item.checked}
-        for item in items
-        if (item.name, item.unit) not in existing_items_dict
-    ]
+    # Process each new item
+    for item in items:
+        item_dict = item.dict()
+        key = (item_dict["name"], item_dict["unit"])
 
-    if not new_items:
-        raise HTTPException(status_code=400, detail="No new items to add.")
-
-    # Insert only new items
-    collection.insert_many(new_items)
+        if key in existing_items_dict:
+            # Update existing item
+            existing_item = existing_items_dict[key]
+            new_quantity = existing_item["quantity"] + item_dict["quantity"]
+            await collection.update_one(
+                {"_id": existing_item["_id"]},
+                {"$set": {"quantity": new_quantity}}
+            )
+        else:
+            # Insert new item
+            await collection.insert_one(item_dict)
 
     # Fetch the updated list
-    updated_list = list(collection.find())
+    updated_list = await collection.find().to_list(length=None)
     updated_list = [{**item, "_id": str(item["_id"])} for item in updated_list]
 
-    return {"message": "Shopping list updated successfully", "shopping_list": updated_list}
+    return {"shopping_list": updated_list}
+
+
+@app.post("/shopping-list/clear")
+async def clear_shopping_list():
+    """Clears all items from the shopping list"""
+    collection_name = "shopping-list"
+    if collection_name not in await app.database.list_collection_names():
+        await app.database.create_collection(collection_name)
+
+    await app.database[collection_name].delete_many({})
+    return {"message": "Shopping list cleared successfully"}
+
+
+@app.post("/shopping-list/remove")
+async def remove_from_shopping_list(item: ShoppingListItem):
+    """Removes a specific item from the shopping list"""
+    collection_name = "shopping-list"
+    if collection_name not in await app.database.list_collection_names():
+        await app.database.create_collection(collection_name)
+
+    result = await app.database[collection_name].delete_one({
+        "name": item.name,
+        "unit": item.unit
+    })
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found in shopping list")
+
+    return {"message": "Item removed from shopping list successfully"}
 
 
 @app.put("/shopping-list/{item_id}")

@@ -1,4 +1,19 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import HomePage from './HomePage/HomePage'
+import About from './HomePage/AboutPage'
+import Contact from './HomePage/ContactPage'
+import FAQPage from './HomePage/FAQPage'
+import RecipeInformation from './RecipeInformation/RecipeInformation'
+import RecipeList from './RecipeList/RecipeList'
+import Login from "./HomePage/Login"
+import Profile from "./HomePage/Profile"
+import Signup from "./HomePage/Signup"
+import Favorite from "./HomePage/Favorite"
+import MealPage from './HomePage/MealPage'
+import AddRecipe from './HomePage/AddRecipe'
+import SmartShoppingList from '../ShoppingList/SmartShoppingList'
+import ProtectedRoute from './ProtectedRoute'
 
 /*
 
@@ -16,46 +31,61 @@ this file. If not, please write to: help.cookbook@gmail.com
  * particular route
  * @author Priyanka Ambawane - dearpriyankasa@gmail.com
  */
-import { Routes, Route } from 'react-router-dom'
-import HomePage from './HomePage/HomePage'
-import About from './HomePage/AboutPage'
-import Contact from './HomePage/ContactPage'
-import FAQPage from './HomePage/FAQPage'
-import RecipeInformation from './RecipeInformation/RecipeInformation'
-import RecipeList from './RecipeList/RecipeList'
-import Login from "./HomePage/Login"; 
-import Profile from "./HomePage/Profile";
-import Signup from "./HomePage/Signup";
-import Favorite from "./HomePage/Favorite";
-import MealPage from './HomePage/MealPage'
-import AddRecipe from './HomePage/AddRecipe'
-
-import SmartShoppingList from '../ShoppingList/SmartShoppingList'
-
 
 const AppContent = () => {
+  const userEmail = localStorage.getItem('userEmail');
+
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/recipe-list" element={<RecipeList />} />
-      <Route path="/recipe-details/:id" element={<RecipeInformation />} />
-      <Route path="/meal" element={<MealPage />} />
+      {/* Public routes */}
+      <Route path="/" element={userEmail ? <Navigate to="/home" replace /> : <HomePage />} />
+      <Route path="/login" element={userEmail ? <Navigate to="/home" replace /> : <Login />} />
+      <Route path="/signup" element={userEmail ? <Navigate to="/home" replace /> : <Signup />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/faq" element={<FAQPage />} />
-      <Route path="/shoppinglist" element={<SmartShoppingList />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/favorites" element={<Favorite />} />
-      <Route path='/add-recipe' element={<AddRecipe />} />
 
-        {/* Route for Login */}
-        <Route path="/login" element={<Login />} />
-
-        {/* Route for Profile */}
-        <Route path="/profile" element={<Profile />} />
-
-        {/* Optional: Route for Home */}
-        <Route path="/" element={<HomePage />} />
+      {/* Protected routes */}
+      <Route path="/home" element={
+        <ProtectedRoute>
+          <HomePage />
+        </ProtectedRoute>
+      } />
+      <Route path="/recipe-list" element={
+        <ProtectedRoute>
+          <RecipeList />
+        </ProtectedRoute>
+      } />
+      <Route path="/recipe-details/:id" element={
+        <ProtectedRoute>
+          <RecipeInformation />
+        </ProtectedRoute>
+      } />
+      <Route path="/meal" element={
+        <ProtectedRoute>
+          <MealPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/shoppinglist" element={
+        <ProtectedRoute>
+          <SmartShoppingList />
+        </ProtectedRoute>
+      } />
+      <Route path="/favorites" element={
+        <ProtectedRoute>
+          <Favorite />
+        </ProtectedRoute>
+      } />
+      <Route path="/add-recipe" element={
+        <ProtectedRoute>
+          <AddRecipe />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
     </Routes>
   )
 }

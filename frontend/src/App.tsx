@@ -18,7 +18,7 @@ this file. If not, please write to: help.cookbook@gmail.com
  * @author Priyanka Ambawane - dearpriyankasa@gmail.com
  */
 import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 import applicationStore from './store';
 import './App.css';
 import GetIngredients from './features/GetIngredients/GetIngredients';
@@ -27,12 +27,17 @@ import AppContent from './features/AppContent/AppContent';
 import GetTags from './features/AppContent/Tag/GetTags';
 import CustomizedAccordions from './features/AppContent/NutritionFilter/CustomizedAccordions';
 import { ThemeProvider, useTheme } from './features/Themes/themeContext';
+import Footer from './features/Footer/Footer';
 
 const store = applicationStore();
 
 // Separate function for the main application content
 const AppContentLayout: React.FC = () => {
   const { theme } = useTheme();
+  const location = useLocation();
+
+  // Only show nutrition filter on recipe list and home pages
+  const showNutritionFilter = ['/recipe-list', '/home'].includes(location.pathname);
 
   return (
     <div className="App" style={{ backgroundColor: theme.background, color: theme.color }}>
@@ -45,12 +50,15 @@ const AppContentLayout: React.FC = () => {
       <div className="search-helper" data-testid="header-comp-44" style={{ backgroundColor: theme.background }}>
         <GetTags />
       </div>
-      <div className="search-helper" data-testid="header-comp-45" style={{ backgroundColor: theme.background }}>
-        <CustomizedAccordions />
-      </div>
+      {showNutritionFilter && (
+        <div className="search-helper" data-testid="header-comp-45" style={{ backgroundColor: theme.background }}>
+          <CustomizedAccordions />
+        </div>
+      )}
       <div className="App-body" data-testid="body-comp-43" style={{ backgroundColor: theme.background }}>
         <AppContent />
       </div>
+      <Footer />
     </div>
   );
 };
