@@ -52,7 +52,7 @@ const Favorites: React.FC = () => {
   if (favorites.length === 0) {
     return (
       <Stack alignItems="center" justifyContent="center" height="50vh" spacing={2}>
-        <Typography variant="h3">👨‍🍳</Typography>
+        <Typography variant="h3"><span role="img" aria-label="chef">👨‍🍳</span></Typography>
         <Typography variant="h5" fontWeight="bold">
           No favorite recipes yet
         </Typography>

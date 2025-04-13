@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react'
+
 /*
 
 Copyright (C) 2022 SE CookBook - All Rights Reserved
@@ -8,7 +10,6 @@ this file. If not, please write to: help.cookbook@gmail.com
 
 */
 
-import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import StarIcon from '@mui/icons-material/Star'
@@ -293,7 +294,7 @@ const RecipeList = () => {
             </FormControl>
 
             {/* Cook Time FormControl */}
-            {selectedCategory != '' && filtedRecipeList.length > 0 && (
+            {selectedCategory !== '' && filtedRecipeList.length > 0 && (
               <FormControl
                 sx={{
                   display: 'flex',

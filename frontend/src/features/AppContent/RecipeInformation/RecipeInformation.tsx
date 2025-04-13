@@ -133,7 +133,6 @@ const CopyUrlModal = ({ open, onClose, url, platform }: any) => {
 const RecipeInformationWrapped = () => {
   const { theme } = useTheme();
   const navigate = useNavigate(); // For redirecting to Meal Plan page
-  const [mealPlan, setMealPlan] = useState<any[]>([]); // Local state for meal plan
   let { id } = useParams()
   const dispatch = useDispatch()
   const [input, setInput] = useState('')
@@ -200,10 +199,7 @@ const RecipeInformationWrapped = () => {
       using the recipe id as soon as the compnent gets loaded up */
   useEffect(() => {
     dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
-    return () => {
-      // state cleanup here
-    }
-  }, [])
+  }, [dispatch, id])
 
   if (recipeInfo.isGetRecipeInfoLoading) {
     return <div data-testid="loading-spinner"> Loading ... </div>
