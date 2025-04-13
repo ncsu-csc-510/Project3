@@ -14,6 +14,7 @@ import MealPage from './HomePage/MealPage'
 import AddRecipe from './HomePage/AddRecipe'
 import SmartShoppingList from '../ShoppingList/SmartShoppingList'
 import ProtectedRoute from './ProtectedRoute'
+import WhatToEatPage from './HomePage/WhatToEatPage'
 
 /*
 
@@ -84,6 +85,11 @@ const AppContent = () => {
       <Route path="/profile" element={
         <ProtectedRoute>
           <Profile />
+        </ProtectedRoute>
+      } />
+      <Route path="/what-to-eat" element={
+        <ProtectedRoute>
+          <WhatToEatPage />
         </ProtectedRoute>
       } />
     </Routes>

@@ -18,7 +18,7 @@ import pymongo
 from groq import Groq
 from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr
 import logging
-from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery
+from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery, ShoppingListItem
 from uuid import uuid4
 from bson import ObjectId
 from models import User, UserLogin
@@ -26,10 +26,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()  # Load environment variables
-app = FastAPI()
-users_db = {}
-app = FastAPI()
-users_db = {}
 
 # Check if the environment variable is loaded correctly
 print(os.getenv("GROQ_API_KEY"))
@@ -42,25 +38,6 @@ config = {
 }
 router = APIRouter()
 client = Groq(api_key=config["GROQ_API_KEY"])
-
-# CORS middleware configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# MongoDB connection
-@app.on_event("startup")
-async def startup_db_client():
-    app.mongodb_client = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-    app.database = app.mongodb_client[os.getenv("DB_NAME")]
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    app.mongodb_client.close()
 
 # Authentication middleware
 async def get_current_user(request: Request):
@@ -79,50 +56,95 @@ class MealPlanEntry(BaseModel):
     day: int  # 0-6 representing Monday-Sunday
     recipe: dict  # The recipe details (name, instructions, etc.)
 
-router = APIRouter()
-
-@router.post("/meal-plan/", response_description="Save a meal plan for a specific day", status_code=200)
+@router.post("/recipe/meal-plan/", response_description="Save a meal plan for a specific day", status_code=200)
 async def save_meal_plan(entry: MealPlanEntry, request: Request):
     """Saves or updates a meal plan for a specific day."""
     try:
-        result = request.app.database["meal_plans"].update_one(
+        # Validate day is within range
+        if entry.day < 0 or entry.day > 6:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Day must be between 0 and 6 (Monday-Sunday)."
+            )
+        
+        # Ensure recipe has required fields
+        if not entry.recipe or not isinstance(entry.recipe, dict):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Recipe must be a valid dictionary."
+            )
+        
+        # Save to database
+        result = await request.app.database["meal_plans"].update_one(
             {"day": entry.day},  # Find by day
             {"$set": {"recipe": entry.recipe}},  # Update the recipe
             upsert=True  # Insert if no entry exists
         )
+        
         return {"message": "Meal plan saved successfully."}
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Error saving meal plan: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while saving the meal plan."
+            detail=f"An error occurred while saving the meal plan: {str(e)}"
         )
 
-@router.get("/meal-plan/", response_description="Get the entire meal plan for the week", status_code=200)
+@router.get("/recipe/meal-plan/", response_description="Get the entire meal plan for the week", status_code=200)
 async def get_meal_plan(request: Request):
     """Retrieves the meal plan for the week."""
     try:
-        meal_plan = list(request.app.database["meal_plans"].find({}))
-
-        # Convert ObjectId to string
-        for entry in meal_plan:
+        # Use async cursor to fetch meal plans
+        cursor = request.app.database["meal_plans"].find({})
+        meal_plan = []
+        async for entry in cursor:
+            # Convert ObjectId to string
             entry["_id"] = str(entry["_id"])
+            meal_plan.append(entry)
 
-        complete_plan = [{day: None} for day in range(7)]
+        # Initialize complete plan with None values for each day
+        complete_plan = [None for _ in range(7)]
+        
+        # Fill in the days that have meal plans
         for entry in meal_plan:
             day = entry.get("day")
-            if day is None or not isinstance(day, int) or day < 0 or day > 6:
+            if day is not None and isinstance(day, int) and 0 <= day <= 6:
+                complete_plan[day] = entry
+            else:
                 print(f"Invalid or missing day field: {entry}")
-                continue
-            complete_plan[day] = entry
 
         return complete_plan
 
     except Exception as e:
+        print(f"Error retrieving meal plan: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving the meal plan. {str(e)}"
+            detail=f"An error occurred while retrieving the meal plan: {str(e)}"
         )
 
+@router.delete("/recipe/meal-plan/{day}", response_description="Delete a meal plan for a specific day", status_code=200)
+async def delete_meal_plan(day: int, request: Request):
+    """Deletes a meal plan for a specific day."""
+    try:
+        if day < 0 or day > 6:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Day must be between 0 and 6."
+            )
+        
+        result = await request.app.database["meal_plans"].delete_one({"day": day})
+        
+        if result.deleted_count == 0:
+            return {"message": "No meal plan found for the specified day."}
+        
+        return {"message": "Meal plan deleted successfully."}
+    except Exception as e:
+        print(f"Error deleting meal plan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while deleting the meal plan: {str(e)}"
+        )
 
 @router.get("/", response_description="List all recipes", response_model=List[Recipe])
 def list_recipes(request: Request):
@@ -678,3 +700,147 @@ async def delete_recipe(
         return {"message": "Recipe deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/shopping-list")
+async def get_shopping_list(request: Request):
+    """Fetches the shopping list from the database or returns an empty list"""
+    collection_name = "shopping-list"
+    if collection_name not in await request.app.database.list_collection_names():
+        await request.app.database.create_collection(collection_name)
+        return {"shopping_list": []}
+
+    shopping_list = await request.app.database[collection_name].find().to_list(length=None)
+    shopping_list = [{**item, "_id": str(item["_id"])}
+                     for item in shopping_list]
+
+    return {"shopping_list": shopping_list}
+
+
+@router.post("/shopping-list/update")
+async def update_shopping_list(items: List[ShoppingListItem], request: Request):
+    """
+    Extends the shopping list in the database with new items.
+    Ensures no duplicate items are added.
+    """
+    print(f"Received items to update: {items}")  # Debug log
+    collection_name = "shopping-list"
+    if collection_name not in await request.app.database.list_collection_names():
+        await request.app.database.create_collection(collection_name)
+        print(f"Created new collection: {collection_name}")  # Debug log
+
+    collection = request.app.database[collection_name]
+
+    # Fetch existing items from the database
+    existing_items = await collection.find().to_list(length=None)
+    print(f"Existing items: {existing_items}")  # Debug log
+    existing_items_dict = {
+        (item["name"], item["unit"]): item for item in existing_items
+    }
+
+    # Process each new item
+    for item in items:
+        item_dict = item.dict()
+        key = (item_dict["name"], item_dict["unit"])
+        print(f"Processing item: {item_dict}")  # Debug log
+
+        if key in existing_items_dict:
+            # Update existing item
+            existing_item = existing_items_dict[key]
+            new_quantity = existing_item["quantity"] + item_dict["quantity"]
+            print(f"Updating existing item {key} with new quantity: {new_quantity}")  # Debug log
+            await collection.update_one(
+                {"_id": existing_item["_id"]},
+                {"$set": {"quantity": new_quantity}}
+            )
+        else:
+            # Insert new item
+            print(f"Inserting new item: {item_dict}")  # Debug log
+            await collection.insert_one(item_dict)
+
+    # Fetch the updated list
+    updated_list = await collection.find().to_list(length=None)
+    updated_list = [{**item, "_id": str(item["_id"])} for item in updated_list]
+    print(f"Final updated list: {updated_list}")  # Debug log
+
+    return {"shopping_list": updated_list}
+
+
+@router.post("/shopping-list/clear")
+async def clear_shopping_list(request: Request):
+    """Clears all items from the shopping list"""
+    collection_name = "shopping-list"
+    if collection_name not in await request.app.database.list_collection_names():
+        await request.app.database.create_collection(collection_name)
+
+    await request.app.database[collection_name].delete_many({})
+    return {"message": "Shopping list cleared successfully"}
+
+
+@router.post("/shopping-list/remove")
+async def remove_from_shopping_list(item: ShoppingListItem, request: Request):
+    """Removes a specific item from the shopping list"""
+    collection_name = "shopping-list"
+    if collection_name not in await request.app.database.list_collection_names():
+        await request.app.database.create_collection(collection_name)
+
+    result = await request.app.database[collection_name].delete_one({
+        "name": item.name,
+        "unit": item.unit
+    })
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found in shopping list")
+
+    return {"message": "Item removed from shopping list successfully"}
+
+
+@router.put("/shopping-list/{item_id}")
+async def update_shopping_list_item(item_id: str, item: ShoppingListItem, request: Request):
+    """
+    Updates a single item in the shopping list by its ID.
+    Ensures the item exists before updating.
+    """
+    collection_name = "shopping-list"
+    collection = request.app.database[collection_name]
+
+    # Try to find the item by ID
+    existing_item = await collection.find_one({"_id": ObjectId(item_id)})
+
+    if not existing_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # Prepare the updated data
+    updated_item_data = {
+        "name": item.name,
+        "quantity": item.quantity,
+        "unit": item.unit,
+        "checked": item.checked
+    }
+
+    # Update the item in the database
+    result = await collection.update_one({"_id": ObjectId(item_id)}, {
+                                   "$set": updated_item_data})
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to update item")
+
+    # Fetch the updated list after the update
+    updated_item = await collection.find_one({"_id": ObjectId(item_id)})
+    updated_item = {**updated_item, "_id": str(updated_item["_id"])}
+
+    return {"message": "Item updated successfully", "shopping_list_item": updated_item}
+
+
+@router.delete("/shopping-list/{item_id}")
+async def delete_shopping_list_item(item_id: str, request: Request):
+    """Deletes an item from the shopping list by its ID"""
+    collection_name = "shopping-list"
+    collection = request.app.database[collection_name]
+
+    # Try to find and delete the item
+    result = await collection.delete_one({"_id": ObjectId(item_id)})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    return {"message": f"Item with ID {item_id} deleted successfully"}

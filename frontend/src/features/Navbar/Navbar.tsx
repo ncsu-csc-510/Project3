@@ -57,6 +57,9 @@ function Navbar() {
             <a href="/add-recipe" className="navbar-item" style={{ color: theme.color }}>
               Add recipe
             </a>
+            <a href="/what-to-eat" className="navbar-item" style={{ color: theme.color }}>
+              What to Eat
+            </a>
           </div>
           <div className="navbar-right">
             <div className="theme-selector">

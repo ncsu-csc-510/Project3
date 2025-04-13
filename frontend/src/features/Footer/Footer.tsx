@@ -31,6 +31,7 @@ const Footer: React.FC = () => {
             <li><Link to="/shoppinglist" style={{ color: theme.color }}>Shopping List</Link></li>
             <li><Link to="/favorites" style={{ color: theme.color }}>Favorites</Link></li>
             <li><Link to="/add-recipe" style={{ color: theme.color }}>Add Recipe</Link></li>
+            <li><Link to="/what-to-eat" style={{ color: theme.color }}>What to Eat</Link></li>
           </ul>
         </div>
 
