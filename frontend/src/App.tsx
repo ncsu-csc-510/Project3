@@ -1,6 +1,17 @@
 import React from 'react';
-
-// import React from 'react';
+import { Provider } from 'react-redux';
+import { BrowserRouter, useLocation } from 'react-router-dom';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import applicationStore from './store';
+import './App.css';
+import GetIngredients from './features/GetIngredients/GetIngredients';
+import Header from './features/Header/Header';
+import AppContent from './features/AppContent/AppContent';
+import GetTags from './features/AppContent/Tag/GetTags';
+import CustomizedAccordions from './features/AppContent/NutritionFilter/CustomizedAccordions';
+import { ThemeProvider, useTheme } from './features/Themes/themeContext';
+import Footer from './features/Footer/Footer';
+import theme from './theme';
 
 /*
 
@@ -19,45 +30,34 @@ this file. If not, please write to: help.cookbook@gmail.com
  * Header and Search component remain static and app contents change according to the state of the application
  * @author Priyanka Ambawane - dearpriyankasa@gmail.com
  */
-import { Provider } from 'react-redux';
-import { BrowserRouter, useLocation } from 'react-router-dom';
-import applicationStore from './store';
-import './App.css';
-import GetIngredients from './features/GetIngredients/GetIngredients';
-import Header from './features/Header/Header';
-import AppContent from './features/AppContent/AppContent';
-import GetTags from './features/AppContent/Tag/GetTags';
-import CustomizedAccordions from './features/AppContent/NutritionFilter/CustomizedAccordions';
-import { ThemeProvider, useTheme } from './features/Themes/themeContext';
-import Footer from './features/Footer/Footer';
 
 const store = applicationStore();
 
 // Separate function for the main application content
 const AppContentLayout: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme: customTheme } = useTheme();
   const location = useLocation();
 
   // Only show nutrition filter on recipe list and home pages
   const showNutritionFilter = ['/recipe-list', '/home'].includes(location.pathname);
 
   return (
-    <div className="App" style={{ backgroundColor: theme.background, color: theme.color }}>
-      <div className="App-header" data-testid="header-comp-43" style={{ backgroundColor: theme.background }}>
+    <div className="App" style={{ backgroundColor: customTheme.background, color: customTheme.color }}>
+      <div className="App-header" data-testid="header-comp-43" style={{ backgroundColor: customTheme.background }}>
         <Header />
       </div>
-      <div className="search-helper" data-testid="search-comp-43" style={{ backgroundColor: theme.background }}>
+      <div className="search-helper" data-testid="search-comp-43" style={{ backgroundColor: customTheme.background }}>
         <GetIngredients />
       </div>
-      <div className="search-helper" data-testid="header-comp-44" style={{ backgroundColor: theme.background }}>
+      <div className="search-helper" data-testid="header-comp-44" style={{ backgroundColor: customTheme.background }}>
         <GetTags />
       </div>
       {showNutritionFilter && (
-        <div className="search-helper" data-testid="header-comp-45" style={{ backgroundColor: theme.background }}>
+        <div className="search-helper" data-testid="header-comp-45" style={{ backgroundColor: customTheme.background }}>
           <CustomizedAccordions />
         </div>
       )}
-      <div className="App-body" data-testid="body-comp-43" style={{ backgroundColor: theme.background }}>
+      <div className="App-body" data-testid="body-comp-43" style={{ backgroundColor: customTheme.background }}>
         <AppContent />
       </div>
       <Footer />
@@ -70,9 +70,11 @@ const App: React.FC = () => {
   return (
     <Provider store={store}>
       <BrowserRouter>
-        <ThemeProvider>
-          <AppContentLayout />
-        </ThemeProvider>
+        <MuiThemeProvider theme={theme}>
+          <ThemeProvider>
+            <AppContentLayout />
+          </ThemeProvider>
+        </MuiThemeProvider>
       </BrowserRouter>
     </Provider>
   );
