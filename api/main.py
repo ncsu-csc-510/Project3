@@ -24,6 +24,8 @@ sys.path.insert(0, '../')
 
 load_dotenv()
 
+load_dotenv()
+
 app = FastAPI()
 
 ca = certifi.where()

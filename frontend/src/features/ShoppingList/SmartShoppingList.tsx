@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
   Container,
+  Container,
   TextField,
   Button,
   List,
@@ -24,8 +25,19 @@ import {
   Tooltip,
   Alert,
   Snackbar,
+  Paper,
+  Box,
+  Grid,
+  Divider,
+  Chip,
+  Tooltip,
+  Alert,
+  Snackbar,
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
+import AddIcon from '@mui/icons-material/Add'
+import EditIcon from '@mui/icons-material/Edit'
+import PrintIcon from '@mui/icons-material/Print'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import PrintIcon from '@mui/icons-material/Print'
@@ -108,6 +120,7 @@ const SmartShoppingList: React.FC = () => {
     
     if (!newItem.trim() || !unit.trim()) {
       showSnackbar('Please fill in all required fields', 'error')
+      showSnackbar('Please fill in all required fields', 'error')
       return
     }
 
@@ -117,6 +130,7 @@ const SmartShoppingList: React.FC = () => {
         name: newItem,
         quantity,
         unit,
+        category,
         category,
         checked: false,
       }
@@ -177,13 +191,41 @@ const SmartShoppingList: React.FC = () => {
         prevItems.filter((item) => item._id !== itemId)
       )
       showSnackbar('Item deleted successfully', 'success')
+      showSnackbar('Item deleted successfully', 'success')
     } catch (error) {
+      showSnackbar('Error deleting item', 'error')
       showSnackbar('Error deleting item', 'error')
     }
   }
 
   const exportListToPDF = () => {
     const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    
+    // Add header
+    doc.setFontSize(24)
+    doc.text('Shopping List', pageWidth / 2, 20, { align: 'center' })
+    
+    // Add date
+    doc.setFontSize(12)
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, 30, { align: 'center' })
+    
+    // Group items by category
+    const itemsByCategory = listItems.reduce((acc, item) => {
+      const cat = item.category || 'Other'
+      if (!acc[cat]) acc[cat] = []
+      acc[cat].push(item)
+      return acc
+    }, {} as Record<string, ShoppingItem[]>)
+
+    let yOffset = 50
+    Object.entries(itemsByCategory).forEach(([category, items]) => {
+      // Add category header
+      doc.setFontSize(16)
+      doc.text(category, 20, yOffset)
+      yOffset += 10
+
+      // Add items
     const pageWidth = doc.internal.pageSize.getWidth()
     
     // Add header
@@ -220,10 +262,29 @@ const SmartShoppingList: React.FC = () => {
         doc.text(text, 20, yOffset)
         yOffset += 10
       })
+      items.forEach((item) => {
+        const text = `${item.checked ? '✓' : '☐'} ${item.name} - ${item.quantity} ${item.unit}`
+        if (yOffset > 270) {
+          doc.addPage()
+          yOffset = 20
+        }
+        doc.text(text, 20, yOffset)
+        yOffset += 10
+      })
       yOffset += 10
     })
 
     doc.save('shopping_list.pdf')
+    showSnackbar('Shopping list exported to PDF', 'success')
+  }
+
+  const getItemsByCategory = () => {
+    return listItems.reduce((acc, item) => {
+      const cat = item.category || 'Other'
+      if (!acc[cat]) acc[cat] = []
+      acc[cat].push(item)
+      return acc
+    }, {} as Record<string, ShoppingItem[]>)
     showSnackbar('Shopping list exported to PDF', 'success')
   }
 

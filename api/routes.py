@@ -146,9 +146,13 @@ async def delete_meal_plan(day: int, request: Request):
             detail=f"An error occurred while deleting the meal plan: {str(e)}"
         )
 
+
 @router.get("/", response_description="List all recipes", response_model=List[Recipe])
 def list_recipes(request: Request):
     """Returns a list of 10 recipes"""
+    recipes = list(request.app.database["recipes"].find().limit(10))
+    for recipe in recipes:
+        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
     recipes = list(request.app.database["recipes"].find().limit(10))
     for recipe in recipes:
         recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
