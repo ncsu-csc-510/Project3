@@ -10,42 +10,59 @@ this file. If not, please write to: help.cookbook@gmail.com
 
 import sys
 import os
-sys.path.insert(0, '../')
-from dotenv import load_dotenv
-from fastapi import FastAPI, APIRouter, Body, Request, HTTPException, status, Depends, Query
-from typing import List, Optional
-import pymongo
-from groq import Groq
-from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr
+import json
+import re
 import logging
-from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery, ShoppingListItem, RecipeStep
+from typing import List, Optional
 from uuid import uuid4
 from bson import ObjectId
-from models import User, UserLogin
+
+import pymongo
+from groq import Groq
+import openai
+from fastapi import FastAPI, APIRouter, Body, Request, HTTPException, status, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr
+from dotenv import load_dotenv
 
-load_dotenv()  # Load environment variables
+# Add parent directory to path
+sys.path.insert(0, '../')
 
-# Check if the environment variable is loaded correctly
-print(os.getenv("GROQ_API_KEY"))
+# Import models
+from models import (
+    Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2,
+    RecipeQuery, NutritionQuery, ShoppingListItem, RecipeStep,
+    MealPlanGenerationRequest, User, UserLogin
+)
 
+# Load environment variables
+load_dotenv()
+
+# Configuration
 config = {
     "ATLAS_URI": os.getenv("ATLAS_URI"),
     "DB_NAME": os.getenv("DB_NAME"),
     "GROQ_API_KEY": os.getenv("GROQ_API_KEY"),
+    "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY"),
     "PORT": os.getenv("PORT")
 }
+
+# Initialize routers
 router = APIRouter()
 user_router = APIRouter()
-client = Groq(api_key=config["GROQ_API_KEY"])
 
-# Helper function to get request object
+# Initialize AI clients
+client = Groq(api_key=config["GROQ_API_KEY"])
+openai.api_key = config["OPENAI_API_KEY"]
+
+# Helper functions
 async def get_request(request: Request):
+    """Helper function to get request object"""
     return request
 
-# Authentication middleware
 async def get_current_user(request: Request):
+    """Authentication middleware"""
     email = request.headers.get("X-User-Email")
     if not email:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -57,10 +74,13 @@ async def get_current_user(request: Request):
     
     return user
 
+# Models
 class MealPlanEntry(BaseModel):
+    """Model for meal plan entry"""
     day: int  # 0-6 representing Monday-Sunday
     recipe: dict  # The recipe details (name, instructions, etc.)
 
+# Meal Plan Routes
 @router.post("/recipes/meal-plan/", response_description="Save a meal plan for a specific day", status_code=200)
 async def save_meal_plan(entry: MealPlanEntry, request: Request):
     """Saves or updates a meal plan for a specific day."""
@@ -81,9 +101,9 @@ async def save_meal_plan(entry: MealPlanEntry, request: Request):
         
         # Save to database
         result = await request.app.database["meal_plans"].update_one(
-            {"day": entry.day},  # Find by day
-            {"$set": {"recipe": entry.recipe}},  # Update the recipe
-            upsert=True  # Insert if no entry exists
+            {"day": entry.day},
+            {"$set": {"recipe": entry.recipe}},
+            upsert=True
         )
         
         return {"message": "Meal plan saved successfully."}
@@ -100,18 +120,14 @@ async def save_meal_plan(entry: MealPlanEntry, request: Request):
 async def get_meal_plan(request: Request):
     """Retrieves the meal plan for the week."""
     try:
-        # Use async cursor to fetch meal plans
         cursor = request.app.database["meal_plans"].find({})
         meal_plan = []
         async for entry in cursor:
-            # Convert ObjectId to string
             entry["_id"] = str(entry["_id"])
             meal_plan.append(entry)
 
-        # Initialize complete plan with None values for each day
         complete_plan = [None for _ in range(7)]
         
-        # Fill in the days that have meal plans
         for entry in meal_plan:
             day = entry.get("day")
             if day is not None and isinstance(day, int) and 0 <= day <= 6:
@@ -120,7 +136,6 @@ async def get_meal_plan(request: Request):
                 print(f"Invalid or missing day field: {entry}")
 
         return complete_plan
-
     except Exception as e:
         print(f"Error retrieving meal plan: {str(e)}")
         raise HTTPException(
@@ -151,16 +166,13 @@ async def delete_meal_plan(day: int, request: Request):
             detail=f"An error occurred while deleting the meal plan: {str(e)}"
         )
 
-
+# Recipe Routes
 @router.get("/", response_description="List all recipes", response_model=List[Recipe])
 def list_recipes(request: Request):
     """Returns a list of 10 recipes"""
     recipes = list(request.app.database["recipes"].find().limit(10))
     for recipe in recipes:
-        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
-    recipes = list(request.app.database["recipes"].find().limit(10))
-    for recipe in recipes:
-        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
+        recipe["_id"] = str(recipe["_id"])
     return recipes
 
 @router.get("/{id}", response_description="Get a recipe by id", response_model=Recipe)
@@ -174,7 +186,7 @@ async def find_recipe(id: str, request: Request):
 @router.get("/search/{ingredient}", response_description="List all recipes with the given ingredient", response_model=List[Recipe])
 async def list_recipes_by_ingregredient(ingredient: str, request: Request):
     """Lists recipes containing the given ingredient"""
-    cursor = request.app.database["recipes"].find({ "ingredients" : { "$in" : [ingredient] } }).limit(10)
+    cursor = request.app.database["recipes"].find({"ingredients": {"$in": [ingredient]}}).limit(10)
     recipes = []
     async for recipe in cursor:
         recipes.append(recipe)
@@ -183,24 +195,31 @@ async def list_recipes_by_ingregredient(ingredient: str, request: Request):
 @router.post("/recipes/search/", response_description="Get Recipes that match all the ingredients in the request", status_code=200, response_model=RecipeListResponse)
 async def list_recipes_by_ingredients_recipe(request: Request, inp: RecipeListRequest = Body(...)):
     """Lists recipes matching all provided ingredients"""
-    cursor = request.app.database["recipes"].find({ "ingredients" : { "$all" : inp.ingredients } }).sort([("rating", pymongo.DESCENDING), ("_id", pymongo.ASCENDING)]).skip((inp.page-1)*10).limit(10)
+    cursor = request.app.database["recipes"].find(
+        {"ingredients": {"$all": inp.ingredients}}
+    ).sort([("rating", pymongo.DESCENDING), ("_id", pymongo.ASCENDING)]).skip((inp.page-1)*10).limit(10)
+    
     recipes = []
     async for recipe in cursor:
         recipes.append(recipe)
     
-    count = await request.app.database["recipes"].count_documents({ "ingredients" : { "$all" : inp.ingredients } })
-    response = RecipeListResponse(recipes=recipes, page=inp.page, count=count)
-    return response
+    count = await request.app.database["recipes"].count_documents({"ingredients": {"$all": inp.ingredients}})
+    return RecipeListResponse(recipes=recipes, page=inp.page, count=count)
 
 @router.get("/recipes/ingredients/{queryString}", response_description="List all ingredients", response_model=List[str])
 async def list_ingredients_recipe(queryString: str, request: Request):
     """Lists ingredient suggestions for a recipe query"""
-    pipeline = [{"$unwind": "$ingredients"}, {'$match': {'ingredients': {'$regex' : queryString}}}, {"$limit" : 20} ,{"$group": {"_id": "null", "ingredients": {"$addToSet": "$ingredients"}}}]
+    pipeline = [
+        {"$unwind": "$ingredients"},
+        {'$match': {'ingredients': {'$regex': queryString}}},
+        {"$limit": 20},
+        {"$group": {"_id": "null", "ingredients": {"$addToSet": "$ingredients"}}}
+    ]
     cursor = request.app.database["recipes"].aggregate(pipeline)
     data = []
     async for doc in cursor:
         data.append(doc)
-    if(len(data) <= 0):
+    if len(data) <= 0:
         return []
     return data[0]["ingredients"]
 
@@ -722,4 +741,151 @@ async def delete_recipe_step(step_number: int, request: Request):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while deleting the recipe step: {str(e)}"
+        )
+
+@router.post("/recipes/generate-meal-plan/", response_description="Generate a meal plan based on user preferences", status_code=200)
+async def generate_meal_plan(request: Request, preferences: MealPlanGenerationRequest = Body(...)):
+    """Generates a meal plan based on user preferences using AI"""
+    try:
+        # Construct the prompt for the AI
+        prompt = f"""
+        Generate a {preferences.days}-day meal plan with the following requirements:
+        - Available ingredients: {', '.join(preferences.ingredients)}
+        - Dietary preferences: {', '.join(preferences.dietary_preferences)}
+        - Maximum cooking time per meal: {preferences.max_cooking_time} minutes
+        - Maximum calories per meal: {preferences.max_calories}
+        - Maximum protein per meal: {preferences.max_protein}g
+        - Maximum sugar per meal: {preferences.max_sugar}g
+        - Maximum sodium per meal: {preferences.max_sodium}mg
+
+        For each day, provide a recipe in the following JSON format:
+        {{
+            "name": "Recipe Name",
+            "ingredients": ["ingredient1", "ingredient2", ...],
+            "ingredientQuantities": ["quantity1", "quantity2", ...],
+            "instructions": ["step1", "step2", ...],
+            "cookTime": "XX minutes",
+            "prepTime": "XX minutes",
+            "calories": number,
+            "protein": number,
+            "sugar": number,
+            "sodium": number,
+            "servings": number
+        }}
+
+        Return ONLY a JSON array of these recipe objects, with no additional text or explanation.
+        """
+
+        # Try OpenAI first, fall back to Groq if it fails
+        try:
+            # Use OpenAI
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a professional chef and nutritionist. Create detailed, healthy recipes that meet the specified requirements. Your response must be valid JSON and contain no additional text."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=4000
+            )
+            response_text = response.choices[0].message.content
+        except Exception as e:
+            print(f"OpenAI error: {str(e)}, falling back to Groq")
+            # Fall back to Groq
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a professional chef and nutritionist. Create detailed, healthy recipes that meet the specified requirements. Your response must be valid JSON and contain no additional text."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                model="llama3-8b-8192",
+                temperature=0.7,
+                max_tokens=4000
+            )
+            response_text = chat_completion.choices[0].message.content
+
+        # Clean the response text to ensure it's valid JSON
+        # Remove any markdown code block markers and any text before the first [
+        response_text = re.sub(r'^.*?\[', '[', response_text, flags=re.DOTALL)
+        response_text = response_text.replace("```json", "").replace("```", "").strip()
+        
+        try:
+            recipes = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON response: {e}")
+            print(f"Response text: {response_text}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to parse AI response. Please try again."
+            )
+
+        # Validate the recipes structure
+        if not isinstance(recipes, list):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Invalid response format: expected a list of recipes"
+            )
+
+        # Save the generated recipes to the database and create meal plan entries
+        for day, recipe in enumerate(recipes):
+            try:
+                # Create a new recipe in the database
+                recipe_id = str(uuid4())
+                recipe_doc = {
+                    "_id": recipe_id,
+                    "name": recipe["name"],
+                    "ingredients": recipe["ingredients"],
+                    "ingredientQuantities": recipe["ingredientQuantities"],
+                    "instructions": recipe["instructions"],
+                    "cookTime": recipe["cookTime"],
+                    "prepTime": recipe["prepTime"],
+                    "calories": str(recipe["calories"]),
+                    "protein": str(recipe["protein"]),
+                    "sugar": str(recipe["sugar"]),
+                    "sodium": str(recipe["sodium"]),
+                    "servings": str(recipe["servings"]),
+                    "category": "Generated Meal Plan",
+                    "tags": preferences.dietary_preferences
+                }
+
+                # Save recipe to database
+                await request.app.database["recipes"].insert_one(recipe_doc)
+
+                # Create meal plan entry
+                meal_plan_entry = {
+                    "day": day,
+                    "recipe": recipe_doc
+                }
+
+                # Save to meal plan
+                await request.app.database["meal_plans"].update_one(
+                    {"day": day},
+                    {"$set": {"recipe": recipe_doc}},
+                    upsert=True
+                )
+            except KeyError as e:
+                print(f"Missing required field in recipe: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Invalid recipe format: missing required field {e}"
+                )
+
+        return {"message": "Meal plan generated successfully", "recipes": recipes}
+
+    except Exception as e:
+        print(f"Error generating meal plan: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while generating the meal plan: {str(e)}"
         )

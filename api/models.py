@@ -181,3 +181,13 @@ class RecipeStep(BaseModel):
     voice_command: Optional[str] = None
     ingredients: Optional[list[str]] = None
     equipment: Optional[list[str]] = None
+
+class MealPlanGenerationRequest(BaseModel):
+    ingredients: List[str] = Field(..., description="List of available ingredients")
+    dietary_preferences: List[str] = Field(..., description="Dietary preferences (e.g., vegetarian, vegan, gluten-free)")
+    max_cooking_time: int = Field(..., description="Maximum cooking time per meal in minutes")
+    max_calories: float = Field(..., description="Maximum calories per meal")
+    max_protein: float = Field(..., description="Maximum protein per meal in grams")
+    max_sugar: float = Field(..., description="Maximum sugar per meal in grams")
+    max_sodium: float = Field(..., description="Maximum sodium per meal in mg")
+    days: int = Field(..., description="Number of days to plan for (1-7)")
