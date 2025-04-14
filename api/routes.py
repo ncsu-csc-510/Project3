@@ -151,19 +151,25 @@ async def delete_meal_plan(day: int, request: Request):
             detail=f"An error occurred while deleting the meal plan: {str(e)}"
         )
 
-@router.get("/recipes", response_description="List all recipes", response_model=List[Recipe])
-async def list_recipes(request: Request):
-    """Returns a list of recipes without user restrictions"""
-    try:
-        db = request.app.database
-        cursor = db.recipes.find().limit(50)
-        recipes = []
-        async for recipe in cursor:
-            recipe["_id"] = str(recipe["_id"])
-            recipes.append(recipe)
-        return recipes
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving recipes: {str(e)}")
+
+@router.get("/", response_description="List all recipes", response_model=List[Recipe])
+def list_recipes(request: Request):
+    """Returns a list of 10 recipes"""
+    recipes = list(request.app.database["recipes"].find().limit(10))
+    for recipe in recipes:
+        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
+    recipes = list(request.app.database["recipes"].find().limit(10))
+    for recipe in recipes:
+        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
+    return recipes
+
+@router.get("/{id}", response_description="Get a recipe by id", response_model=Recipe)
+async def find_recipe(id: str, request: Request):
+    """Finds a recipe mapped to the provided ID"""
+    recipe = await request.app.database["recipes"].find_one({"_id": id})
+    if recipe is not None:
+        return recipe
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Recipe with ID {id} not found")
 
 @router.get("/search/{ingredient}", response_description="List all recipes with the given ingredient", response_model=List[Recipe])
 async def list_recipes_by_ingregredient(ingredient: str, request: Request):
@@ -606,7 +612,17 @@ async def get_recipes(
             "has_previous": page > 1
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import logging
+        logging.error(f"Error in get_recipes: {str(e)}")
+        # Return an empty list instead of raising an exception
+        return {
+            "recipes": [],
+            "page": page,
+            "count": 0,
+            "total_pages": 0,
+            "has_next": False,
+            "has_previous": False
+        }
 
 @router.get("/recipes/recipe-details/{recipe_id}")
 async def get_recipe_details(recipe_id: str, request: Request):
