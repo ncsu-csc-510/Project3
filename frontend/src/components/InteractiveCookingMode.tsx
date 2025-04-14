@@ -7,7 +7,8 @@ import {
   Button, 
   Typography, 
   Box, 
-  Select, 
+  Select,
+  SelectChangeEvent,
   MenuItem, 
   FormControl,
   InputLabel
@@ -88,8 +89,8 @@ const InteractiveCookingMode: React.FC<InteractiveCookingModeProps> = ({
     }
   };
   
-  const handleVoiceChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const voiceName = event.target.value as string;
+  const handleVoiceChange = (event: SelectChangeEvent<string>) => {
+    const voiceName = event.target.value;
     const voice = availableVoices.find(v => v.name === voiceName);
     setSelectedVoice(voice || null);
   };

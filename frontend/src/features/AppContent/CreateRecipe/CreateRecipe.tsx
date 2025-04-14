@@ -64,7 +64,7 @@ const CreateRecipe: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(`http://localhost:8000/recipe?email=${userEmail}`, formData);
+      const response = await axios.post(`http://localhost:8000/recipes?email=${userEmail}`, formData);
       if (response.status === 200) {
         alert('Recipe created successfully!');
         navigate('/recipes');

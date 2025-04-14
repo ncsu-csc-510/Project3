@@ -18,7 +18,7 @@ import pymongo
 from groq import Groq
 from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr
 import logging
-from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery, ShoppingListItem
+from models import Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2, RecipeQuery, NutritionQuery, ShoppingListItem, RecipeStep
 from uuid import uuid4
 from bson import ObjectId
 from models import User, UserLogin
@@ -40,6 +40,10 @@ router = APIRouter()
 user_router = APIRouter()
 client = Groq(api_key=config["GROQ_API_KEY"])
 
+# Helper function to get request object
+async def get_request(request: Request):
+    return request
+
 # Authentication middleware
 async def get_current_user(request: Request):
     email = request.headers.get("X-User-Email")
@@ -57,7 +61,7 @@ class MealPlanEntry(BaseModel):
     day: int  # 0-6 representing Monday-Sunday
     recipe: dict  # The recipe details (name, instructions, etc.)
 
-@router.post("/recipe/meal-plan/", response_description="Save a meal plan for a specific day", status_code=200)
+@router.post("/recipes/meal-plan/", response_description="Save a meal plan for a specific day", status_code=200)
 async def save_meal_plan(entry: MealPlanEntry, request: Request):
     """Saves or updates a meal plan for a specific day."""
     try:
@@ -92,7 +96,7 @@ async def save_meal_plan(entry: MealPlanEntry, request: Request):
             detail=f"An error occurred while saving the meal plan: {str(e)}"
         )
 
-@router.get("/recipe/meal-plan/", response_description="Get the entire meal plan for the week", status_code=200)
+@router.get("/recipes/meal-plan/", response_description="Get the entire meal plan for the week", status_code=200)
 async def get_meal_plan(request: Request):
     """Retrieves the meal plan for the week."""
     try:
@@ -124,7 +128,7 @@ async def get_meal_plan(request: Request):
             detail=f"An error occurred while retrieving the meal plan: {str(e)}"
         )
 
-@router.delete("/recipe/meal-plan/{day}", response_description="Delete a meal plan for a specific day", status_code=200)
+@router.delete("/recipes/meal-plan/{day}", response_description="Delete a meal plan for a specific day", status_code=200)
 async def delete_meal_plan(day: int, request: Request):
     """Deletes a meal plan for a specific day."""
     try:
@@ -147,21 +151,19 @@ async def delete_meal_plan(day: int, request: Request):
             detail=f"An error occurred while deleting the meal plan: {str(e)}"
         )
 
-@router.get("/", response_description="List all recipes", response_model=List[Recipe])
-def list_recipes(request: Request):
-    """Returns a list of 10 recipes"""
-    recipes = list(request.app.database["recipes"].find().limit(10))
-    for recipe in recipes:
-        recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
-    return recipes
-
-@router.get("/{id}", response_description="Get a recipe by id", response_model=Recipe)
-async def find_recipe(id: str, request: Request):
-    """Finds a recipe mapped to the provided ID"""
-    recipe = await request.app.database["recipes"].find_one({"_id": id})
-    if recipe is not None:
-        return recipe
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Recipe with ID {id} not found")
+@router.get("/recipes", response_description="List all recipes", response_model=List[Recipe])
+async def list_recipes(request: Request):
+    """Returns a list of recipes without user restrictions"""
+    try:
+        db = request.app.database
+        cursor = db.recipes.find().limit(50)
+        recipes = []
+        async for recipe in cursor:
+            recipe["_id"] = str(recipe["_id"])
+            recipes.append(recipe)
+        return recipes
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving recipes: {str(e)}")
 
 @router.get("/search/{ingredient}", response_description="List all recipes with the given ingredient", response_model=List[Recipe])
 async def list_recipes_by_ingregredient(ingredient: str, request: Request):
@@ -172,8 +174,8 @@ async def list_recipes_by_ingregredient(ingredient: str, request: Request):
         recipes.append(recipe)
     return recipes
 
-@router.post("/search/", response_description="Get Recipes that match all the ingredients in the request", status_code=200, response_model=RecipeListResponse)
-async def list_recipes_by_ingredients(request: Request, inp: RecipeListRequest = Body(...)):
+@router.post("/recipes/search/", response_description="Get Recipes that match all the ingredients in the request", status_code=200, response_model=RecipeListResponse)
+async def list_recipes_by_ingredients_recipe(request: Request, inp: RecipeListRequest = Body(...)):
     """Lists recipes matching all provided ingredients"""
     cursor = request.app.database["recipes"].find({ "ingredients" : { "$all" : inp.ingredients } }).sort([("rating", pymongo.DESCENDING), ("_id", pymongo.ASCENDING)]).skip((inp.page-1)*10).limit(10)
     recipes = []
@@ -184,9 +186,9 @@ async def list_recipes_by_ingredients(request: Request, inp: RecipeListRequest =
     response = RecipeListResponse(recipes=recipes, page=inp.page, count=count)
     return response
 
-@router.get("/ingredients/{queryString}", response_description="List all ingredients", response_model=List[str])
-async def list_ingredients(queryString : str, request: Request):
-    """Lists ingredient suggestions for a query"""
+@router.get("/recipes/ingredients/{queryString}", response_description="List all ingredients", response_model=List[str])
+async def list_ingredients_recipe(queryString: str, request: Request):
+    """Lists ingredient suggestions for a recipe query"""
     pipeline = [{"$unwind": "$ingredients"}, {'$match': {'ingredients': {'$regex' : queryString}}}, {"$limit" : 20} ,{"$group": {"_id": "null", "ingredients": {"$addToSet": "$ingredients"}}}]
     cursor = request.app.database["recipes"].aggregate(pipeline)
     data = []
@@ -232,18 +234,30 @@ async def list_recipes_by_ingredients(request: Request, inp: RecipeListRequest2 
     return response
 
 @router.get("/search2/{ingredient},{caloriesLow},{caloriesUp}", response_description="List all recipes with the given ingredient")
-def list_recipes_by_ingregredient(ingredient: str, caloriesLow: int, caloriesUp: int, request: Request):
-    recipes = list(request.app.database["recipes"].find({ "ingredients" : { "$in" : [ingredient] } }))
-    res = []
-    for recipe in recipes:
-        if not recipe["calories"]:
-            continue
-        if caloriesLow < float(recipe["calories"]) < caloriesUp:
-            res.append(recipe)
-    res.sort(key = lambda x: x['calories'])
-    return res
+async def list_recipes_by_ingredient_calories(ingredient: str, caloriesLow: int, caloriesUp: int, request: Request):
+    """Lists recipes containing the given ingredient with calorie constraints"""
+    try:
+        cursor = request.app.database["recipes"].find({ "ingredients" : { "$in" : [ingredient] } })
+        recipes = []
+        async for recipe in cursor:
+            recipe["_id"] = str(recipe["_id"])
+            if not recipe.get("calories"):
+                continue
+            try:
+                if caloriesLow < float(recipe["calories"]) < caloriesUp:
+                    recipes.append(recipe)
+            except (ValueError, TypeError):
+                continue
+                
+        recipes.sort(key=lambda x: float(x.get('calories', 0)))
+        return recipes
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while retrieving recipes: {str(e)}"
+        )
 
-@router.post("/recommend-recipes/", response_model=dict)
+@router.post("/recipes/recommend-recipes/", response_model=dict)
 async def recommend_recipes(query: RecipeQuery = Body(...)):
     try:
         query.query = query.query.replace('\n', ' ').replace('\t', ' ').replace('  ', ' ').strip()
@@ -276,44 +290,41 @@ async def recommend_recipes(query: RecipeQuery = Body(...)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An unexpected error occurred")
     
 @router.post("/recipes", response_description="Add a new recipe to the database", status_code=201, response_model=Recipe)
-async def add_new_recipe(recipe: Recipe, request: Request, current_user: dict = Depends(get_current_user)):
-    """Adds a new recipe to the database with an auto-generated ID."""
-    if not recipe.name or not recipe.category or not recipe.ingredients:
-        raise HTTPException(status_code=400, detail="Required fields missing")
-
-    required_fields = {
-            "name": recipe.name,
-            "category": recipe.category,
-            "ingredients": recipe.ingredients,
-            "instructions": recipe.instructions
-        }
-        
-    missing_fields = [field for field, value in required_fields.items() if not value]
-    if missing_fields:
-        raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Missing required fields: {', '.join(missing_fields)}"
-            )
-            
-    try:        
+async def create_recipe(recipe: Recipe, request: Request):
+    """Creates a new recipe without user restrictions"""
+    try:
+        # Set the recipe data
         recipe_dict = recipe.dict(by_alias=True)
-        recipe_dict["_id"] = str(uuid4())  
-        recipe_dict["userId"] = str(current_user["_id"])
+        
+        # Ensure required fields are present
+        if not recipe_dict.get("name") or not recipe_dict.get("category") or not recipe_dict.get("ingredients"):
+            raise HTTPException(status_code=400, detail="Missing required fields: name, category, or ingredients")
+            
+        # Ensure arrays are properly initialized
+        if not recipe_dict.get("tags"):
+            recipe_dict["tags"] = []
+        if not recipe_dict.get("ingredientQuantities"):
+            recipe_dict["ingredientQuantities"] = []
+        if not recipe_dict.get("instructions"):
+            recipe_dict["instructions"] = []
+        if not recipe_dict.get("images"):
+            recipe_dict["images"] = []
 
-        # Insert the recipe into the database
-        result = request.app.database["recipes"].insert_one(recipe_dict)
-
-        # Fetch the newly inserted recipe to return
-        created_recipe = request.app.database["recipes"].find_one({"_id": result.inserted_id})
-        created_recipe["_id"] = str(created_recipe["_id"])  # Convert ObjectId to string
-
+        # Insert the recipe
+        result = await request.app.database["recipes"].insert_one(recipe_dict)
+        
+        # Get the created recipe
+        created_recipe = await request.app.database["recipes"].find_one({"_id": result.inserted_id})
+        
+        # Convert ObjectId to string for JSON serialization
+        if created_recipe and "_id" in created_recipe:
+            created_recipe["_id"] = str(created_recipe["_id"])
+        
         return created_recipe
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while adding the recipe: {str(e)}"
-        )
-        
+        print(f"Error creating recipe: {str(e)}")  # Add logging for debugging
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/search-name/{name}", response_description="Search recipes by name (case and whitespace insensitive)", response_model=List[Recipe])
 async def search_recipe_by_name(name: str, request: Request):
     """Searches the database for recipe where the name matchse"""
@@ -358,7 +369,7 @@ async def search_recipe_by_name(name: str, request: Request):
             detail=f"An error occurred while searching for the recipe."
         )
         
-@router.post("/nutrition-chatbot/", response_description="Get personalized nutrition recommendations", status_code=200)
+@router.post("/recipes/nutrition-chatbot/", response_description="Get personalized nutrition recommendations", status_code=200)
 async def get_nutrition_recommendations(query: NutritionQuery, request: Request):
     try:
         # Calculate BMR using Mifflin-St Jeor Equation
@@ -498,72 +509,90 @@ async def update_user_profile(email: str, request: Request):
     
     return {"message": "Profile updated successfully"}
 
-@router.get("/recipes", response_description="List all recipes", response_model=List[Recipe])
-async def list_recipes(request: Request, email: str = Query(..., description="User's email")):
-    """Returns a list of recipes for a specific user"""
-    db = request.app.database
-    cursor = db.recipes.find({"userId": email})
-    recipes = []
-    async for recipe in cursor:
-        recipe["_id"] = str(recipe["_id"])
-        recipes.append(recipe)
-    return recipes
-
 @router.get("/recipes/{recipe_id}", response_description="Get a recipe by id", response_model=Recipe)
-async def get_recipe(recipe_id: str, request: Request, current_user: dict = Depends(get_current_user)):
-    db = request.app.database
-    recipe = await db.recipes.find_one({"_id": ObjectId(recipe_id), "userId": str(current_user["_id"])})
-    if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    recipe["_id"] = str(recipe["_id"])
-    return recipe
+async def get_recipe(recipe_id: str, request: Request):
+    """Gets a recipe by ID without user restrictions"""
+    try:
+        db = request.app.database
+        recipe = await db.recipes.find_one({"_id": recipe_id})
+        if not recipe:
+            raise HTTPException(status_code=404, detail=f"Recipe with ID {recipe_id} not found")
+        recipe["_id"] = str(recipe["_id"])
+        return recipe
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving recipe: {str(e)}")
 
 @router.put("/recipes/{recipe_id}", response_description="Update a recipe", status_code=200)
-async def update_recipe(recipe_id: str, recipe: Recipe, request: Request, current_user: dict = Depends(get_current_user)):
-    db = request.app.database
-    recipe_dict = recipe.dict()
-    recipe_dict["userId"] = str(current_user["_id"])
-    result = await db.recipes.update_one(
-        {"_id": ObjectId(recipe_id), "userId": str(current_user["_id"])},
-        {"$set": recipe_dict}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    return {"message": "Recipe updated successfully"}
+async def update_recipe(recipe_id: str, recipe: Recipe, request: Request):
+    """Updates a recipe without user restrictions"""
+    try:
+        db = request.app.database
+        
+        # Verify recipe exists
+        existing_recipe = await db.recipes.find_one({"_id": recipe_id})
+        if not existing_recipe:
+            raise HTTPException(status_code=404, detail=f"Recipe with ID {recipe_id} not found")
+            
+        # Update the recipe
+        recipe_dict = recipe.dict()
+        
+        result = await db.recipes.update_one(
+            {"_id": recipe_id},
+            {"$set": recipe_dict}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Recipe not found")
+            
+        # Get the updated recipe
+        updated_recipe = await db.recipes.find_one({"_id": recipe_id})
+        updated_recipe["_id"] = str(updated_recipe["_id"])
+        
+        return updated_recipe
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating recipe: {str(e)}")
 
 @router.delete("/recipes/{recipe_id}", response_description="Delete a recipe", status_code=200)
-async def delete_recipe(recipe_id: str, request: Request, current_user: dict = Depends(get_current_user)):
-    db = request.app.database
-    result = await db.recipes.delete_one({"_id": ObjectId(recipe_id), "userId": str(current_user["_id"])})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    return {"message": "Recipe deleted successfully"}
-
-@router.get("/recipe-list")
-async def get_recipes(
-    email: str = Query(..., description="User's email"),
-    page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(10, ge=1, le=100, description="Items per page")
-):
-    """Get a list of recipes for the authenticated user"""
+async def delete_recipe(recipe_id: str, request: Request):
+    """Deletes a recipe without user restrictions"""
     try:
-        # Verify user exists
-        user = await request.app.database["users"].find_one({"email": email})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        db = request.app.database
+        
+        # Verify recipe exists
+        existing_recipe = await db.recipes.find_one({"_id": recipe_id})
+        if not existing_recipe:
+            raise HTTPException(status_code=404, detail=f"Recipe with ID {recipe_id} not found")
+            
+        # Delete the recipe
+        result = await db.recipes.delete_one({"_id": recipe_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Recipe not found")
+            
+        return {"message": f"Recipe with ID {recipe_id} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting recipe: {str(e)}")
 
+@router.get("/recipes/recipe-list")
+async def get_recipes(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page"),
+    request: Request = Depends(get_request)
+):
+    """Get a paginated list of recipes without user restrictions"""
+    try:
         # Calculate skip value for pagination
         skip = (page - 1) * limit
 
-        # Get recipes for the specific user
-        cursor = request.app.database["recipes"].find({"userId": email}).skip(skip).limit(limit)
+        # Get recipes without user filtering
+        cursor = request.app.database["recipes"].find().skip(skip).limit(limit)
         recipes = []
         async for recipe in cursor:
             recipe["_id"] = str(recipe["_id"])  # Convert ObjectId to string
             recipes.append(recipe)
 
-        # Get total count of recipes for the user
-        total_count = await request.app.database["recipes"].count_documents({"userId": email})
+        # Get total count of recipes
+        total_count = await request.app.database["recipes"].count_documents({})
 
         # Calculate total pages
         total_pages = (total_count + limit - 1) // limit
@@ -579,279 +608,24 @@ async def get_recipes(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/recipe-details/{recipe_id}")
-async def get_recipe_details(
-    recipe_id: str,
-    email: str = Query(..., description="User's email")
-):
-    """Get details of a specific recipe"""
+@router.get("/recipes/recipe-details/{recipe_id}")
+async def get_recipe_details(recipe_id: str, request: Request):
+    """Get details of a specific recipe without user restrictions"""
     try:
-        # Verify user exists
-        user = await request.app.database["users"].find_one({"email": email})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Get recipe and verify ownership
-        recipe = await request.app.database["recipes"].find_one({"_id": recipe_id, "userId": email})
+        # Get recipe without user verification
+        recipe = await request.app.database["recipes"].find_one({"_id": recipe_id})
         if not recipe:
             raise HTTPException(status_code=404, detail="Recipe not found")
-
+            
+        # Convert ObjectId to string for JSON serialization
+        if recipe and "_id" in recipe:
+            recipe["_id"] = str(recipe["_id"])
+            
         return recipe
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Add this function before the create_recipe endpoint
-async def get_request(request: Request):
-    return request
-
-@router.post("/recipe")
-async def create_recipe(
-    recipe: Recipe,
-    email: str = Query(..., description="User's email"),
-    request: Request = Depends(get_request)
-):
-    """Create a new recipe"""
-    try:
-        # Verify user exists
-        user = await request.app.database["users"].find_one({"email": email})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Set the user ID for the recipe
-        recipe_dict = recipe.dict(by_alias=True)
-        recipe_dict["userId"] = email
-        
-        # Ensure required fields are present
-        if not recipe_dict.get("name") or not recipe_dict.get("category") or not recipe_dict.get("ingredients"):
-            raise HTTPException(status_code=400, detail="Missing required fields: name, category, or ingredients")
-            
-        # Ensure arrays are properly initialized
-        if not recipe_dict.get("tags"):
-            recipe_dict["tags"] = []
-        if not recipe_dict.get("ingredientQuantities"):
-            recipe_dict["ingredientQuantities"] = []
-        if not recipe_dict.get("instructions"):
-            recipe_dict["instructions"] = []
-        if not recipe_dict.get("images"):
-            recipe_dict["images"] = []
-
-        # Insert the recipe
-        result = await request.app.database["recipes"].insert_one(recipe_dict)
-        
-        # Get the created recipe
-        created_recipe = await request.app.database["recipes"].find_one({"_id": result.inserted_id})
-        
-        # Convert ObjectId to string for JSON serialization
-        if created_recipe and "_id" in created_recipe:
-            created_recipe["_id"] = str(created_recipe["_id"])
-        
-        return created_recipe
-    except Exception as e:
-        print(f"Error creating recipe: {str(e)}")  # Add logging for debugging
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.put("/recipe/{recipe_id}")
-async def update_recipe(
-    recipe_id: str,
-    recipe: Recipe,
-    email: str = Query(..., description="User's email")
-):
-    """Update an existing recipe"""
-    try:
-        # Verify user exists
-        user = await request.app.database["users"].find_one({"email": email})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Verify recipe exists and belongs to user
-        existing_recipe = await request.app.database["recipes"].find_one({"_id": recipe_id, "userId": email})
-        if not existing_recipe:
-            raise HTTPException(status_code=404, detail="Recipe not found")
-
-        # Update the recipe
-        recipe_dict = recipe.dict()
-        recipe_dict["userId"] = email  # Ensure userId remains set
-
-        await request.app.database["recipes"].update_one(
-            {"_id": recipe_id},
-            {"$set": recipe_dict}
-        )
-
-        # Get the updated recipe
-        updated_recipe = await request.app.database["recipes"].find_one({"_id": recipe_id})
-        return updated_recipe
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/recipe/{recipe_id}")
-async def delete_recipe(
-    recipe_id: str,
-    email: str = Query(..., description="User's email")
-):
-    """Delete a recipe"""
-    try:
-        # Verify user exists
-        user = await request.app.database["users"].find_one({"email": email})
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Verify recipe exists and belongs to user
-        recipe = await request.app.database["recipes"].find_one({"_id": recipe_id, "userId": email})
-        if not recipe:
-            raise HTTPException(status_code=404, detail="Recipe not found")
-
-        # Delete the recipe
-        await request.app.database["recipes"].delete_one({"_id": recipe_id})
-        
-        return {"message": "Recipe deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/shopping-list")
-async def get_shopping_list(request: Request):
-    """Fetches the shopping list from the database or returns an empty list"""
-    collection_name = "shopping-list"
-    if collection_name not in await request.app.database.list_collection_names():
-        await request.app.database.create_collection(collection_name)
-        return {"shopping_list": []}
-
-    shopping_list = await request.app.database[collection_name].find().to_list(length=None)
-    shopping_list = [{**item, "_id": str(item["_id"])}
-                     for item in shopping_list]
-
-    return {"shopping_list": shopping_list}
-
-
-@router.post("/shopping-list/update")
-async def update_shopping_list(items: List[ShoppingListItem], request: Request):
-    """
-    Extends the shopping list in the database with new items.
-    Ensures no duplicate items are added.
-    """
-    print(f"Received items to update: {items}")  # Debug log
-    collection_name = "shopping-list"
-    if collection_name not in await request.app.database.list_collection_names():
-        await request.app.database.create_collection(collection_name)
-        print(f"Created new collection: {collection_name}")  # Debug log
-
-    collection = request.app.database[collection_name]
-
-    # Fetch existing items from the database
-    existing_items = await collection.find().to_list(length=None)
-    print(f"Existing items: {existing_items}")  # Debug log
-    existing_items_dict = {
-        (item["name"], item["unit"]): item for item in existing_items
-    }
-
-    # Process each new item
-    for item in items:
-        item_dict = item.dict()
-        key = (item_dict["name"], item_dict["unit"])
-        print(f"Processing item: {item_dict}")  # Debug log
-
-        if key in existing_items_dict:
-            # Update existing item
-            existing_item = existing_items_dict[key]
-            new_quantity = existing_item["quantity"] + item_dict["quantity"]
-            print(f"Updating existing item {key} with new quantity: {new_quantity}")  # Debug log
-            await collection.update_one(
-                {"_id": existing_item["_id"]},
-                {"$set": {"quantity": new_quantity}}
-            )
-        else:
-            # Insert new item
-            print(f"Inserting new item: {item_dict}")  # Debug log
-            await collection.insert_one(item_dict)
-
-    # Fetch the updated list
-    updated_list = await collection.find().to_list(length=None)
-    updated_list = [{**item, "_id": str(item["_id"])} for item in updated_list]
-    print(f"Final updated list: {updated_list}")  # Debug log
-
-    return {"shopping_list": updated_list}
-
-
-@router.post("/shopping-list/clear")
-async def clear_shopping_list(request: Request):
-    """Clears all items from the shopping list"""
-    collection_name = "shopping-list"
-    if collection_name not in await request.app.database.list_collection_names():
-        await request.app.database.create_collection(collection_name)
-
-    await request.app.database[collection_name].delete_many({})
-    return {"message": "Shopping list cleared successfully"}
-
-
-@router.post("/shopping-list/remove")
-async def remove_from_shopping_list(item: ShoppingListItem, request: Request):
-    """Removes a specific item from the shopping list"""
-    collection_name = "shopping-list"
-    if collection_name not in await request.app.database.list_collection_names():
-        await request.app.database.create_collection(collection_name)
-
-    result = await request.app.database[collection_name].delete_one({
-        "name": item.name,
-        "unit": item.unit
-    })
-
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found in shopping list")
-
-    return {"message": "Item removed from shopping list successfully"}
-
-
-@router.put("/shopping-list/{item_id}")
-async def update_shopping_list_item(item_id: str, item: ShoppingListItem, request: Request):
-    """
-    Updates a single item in the shopping list by its ID.
-    Ensures the item exists before updating.
-    """
-    collection_name = "shopping-list"
-    collection = request.app.database[collection_name]
-
-    # Try to find the item by ID
-    existing_item = await collection.find_one({"_id": ObjectId(item_id)})
-
-    if not existing_item:
-        raise HTTPException(status_code=404, detail="Item not found")
-
-    # Prepare the updated data
-    updated_item_data = {
-        "name": item.name,
-        "quantity": item.quantity,
-        "unit": item.unit,
-        "checked": item.checked
-    }
-
-    # Update the item in the database
-    result = await collection.update_one({"_id": ObjectId(item_id)}, {
-                                   "$set": updated_item_data})
-
-    if result.matched_count == 0:
-        raise HTTPException(status_code=400, detail="Failed to update item")
-
-    # Fetch the updated list after the update
-    updated_item = await collection.find_one({"_id": ObjectId(item_id)})
-    updated_item = {**updated_item, "_id": str(updated_item["_id"])}
-
-    return {"message": "Item updated successfully", "shopping_list_item": updated_item}
-
-
-@router.delete("/shopping-list/{item_id}")
-async def delete_shopping_list_item(item_id: str, request: Request):
-    """Deletes an item from the shopping list by its ID"""
-    collection_name = "shopping-list"
-    collection = request.app.database[collection_name]
-
-    # Try to find and delete the item
-    result = await collection.delete_one({"_id": ObjectId(item_id)})
-
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Item not found")
-
-    return {"message": f"Item with ID {item_id} deleted successfully"}
-
-@router.post("/recipe-steps/", response_description="Add a new recipe step", status_code=201)
+@router.post("/recipes/recipe-steps/", response_description="Add a new recipe step", status_code=201)
 async def add_recipe_step(step: RecipeStep, request: Request):
     """Adds a new recipe step to the database."""
     try:
@@ -864,24 +638,39 @@ async def add_recipe_step(step: RecipeStep, request: Request):
             detail=f"An error occurred while adding the recipe step: {str(e)}"
         )
 
-@router.get("/recipe-steps/{step_number}", response_description="Get a recipe step by number", response_model=RecipeStep)
+@router.get("/recipes/recipe-steps/{step_number}", response_description="Get a recipe step by number", response_model=RecipeStep)
 async def get_recipe_step(step_number: int, request: Request):
     """Retrieves a recipe step by its step number."""
-    step = request.app.database["recipe_steps"].find_one({"step_number": step_number})
-    if step:
-        return step
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Recipe step with number {step_number} not found"
-    )
+    try:
+        step = await request.app.database["recipe_steps"].find_one({"step_number": step_number})
+        if step:
+            return step
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Recipe step with number {step_number} not found"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while retrieving the recipe step: {str(e)}"
+        )
 
-@router.get("/recipe-steps/", response_description="List all recipe steps", response_model=List[RecipeStep])
+@router.get("/recipes/recipe-steps/", response_description="List all recipe steps", response_model=List[RecipeStep])
 async def list_recipe_steps(request: Request):
     """Lists all recipe steps in the database."""
-    steps = list(request.app.database["recipe_steps"].find().sort("step_number", 1))
-    return steps
+    try:
+        cursor = request.app.database["recipe_steps"].find().sort("step_number", 1)
+        steps = []
+        async for step in cursor:
+            steps.append(step)
+        return steps
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while listing recipe steps: {str(e)}"
+        )
 
-@router.put("/recipe-steps/{step_number}", response_description="Update a recipe step", status_code=200)
+@router.put("/recipes/recipe-steps/{step_number}", response_description="Update a recipe step", status_code=200)
 async def update_recipe_step(step_number: int, step: RecipeStep, request: Request):
     """Updates an existing recipe step."""
     try:
@@ -902,7 +691,7 @@ async def update_recipe_step(step_number: int, step: RecipeStep, request: Reques
             detail=f"An error occurred while updating the recipe step: {str(e)}"
         )
 
-@router.delete("/recipe-steps/{step_number}", response_description="Delete a recipe step", status_code=200)
+@router.delete("/recipes/recipe-steps/{step_number}", response_description="Delete a recipe step", status_code=200)
 async def delete_recipe_step(step_number: int, request: Request):
     """Deletes a recipe step from the database."""
     try:

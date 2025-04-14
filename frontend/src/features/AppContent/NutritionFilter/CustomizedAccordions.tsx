@@ -99,7 +99,7 @@ export default function CustomizedAccordions() {
 
   const onSearch = () => {
     dispatch(
-      getRecipeListInitiator('http://localhost:8000/recipe/search2/', {
+      getRecipeListInitiator('http://localhost:8000/recipes/search2/', {
         page: 1,
         caloriesUp: cal,
         fatUp: fat,
@@ -117,7 +117,7 @@ export default function CustomizedAccordions() {
   const handleAIHelp = async () => {
     try {
       const response = await fetch(
-        'http://localhost:8000/recipe/nutrition-chatbot/',
+        'http://localhost:8000/recipes/nutrition-chatbot/',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -145,7 +145,7 @@ export default function CustomizedAccordions() {
       `,
         icon: 'success',
         confirmButtonColor: '#3085d6',
-        confirmButtonText: 'Awesome! Let’s Go 🚀',
+        confirmButtonText: 'Awesome! Let\'s Go 🚀',
       })
     } catch (err) {
       console.error('AI recommendation failed:', err)

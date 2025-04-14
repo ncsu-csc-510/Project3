@@ -52,7 +52,7 @@ const Favorites: React.FC = () => {
   }, []);
 
   const gotoRecipe = (id: string) => {
-      dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
+      dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id))
       navigateTo('/recipe-details/' + id)
   }
 

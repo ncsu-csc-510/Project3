@@ -189,19 +189,30 @@ const RecipeInformationWrapped = () => {
   /* the effect hook below does an api call to get the recipe details
       using the recipe id as soon as the compnent gets loaded up */
   useEffect(() => {
-    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
-  }, [dispatch, id])
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) {
+      navigate('/login');
+      return;
+    }
+    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id));
+  }, [dispatch, id, navigate]);
 
   if (recipeInfo.isGetRecipeInfoLoading) {
     return <div data-testid="loading-spinner"> Loading ... </div>
-  }  else if (recipeInfo.isGetRecipeInfoError) {
+  } else if (recipeInfo.isGetRecipeInfoFailure) {
+    // Check if the error is authentication related and redirect to login
+    const error = recipeInfo.getRecipeInfoError;
+    if (error && error.includes('401')) {
+      navigate('/login');
+      return null;
+    }
     return <div data-testid="error-message">Failed to load recipe data</div>;
   } else if (recipeInfo.isGetRecipeInfoSuccess) {
     const recipe = recipeInfo.getRecipeInfoData // The recipe object containing all necessary information
 
     const handleAddToMealPlan = async (recipee: any, dayIndex: number) => {
       try {
-        const responsee = await axios.post("http://localhost:8000/recipe/meal-plan/", {
+        const responsee = await axios.post("http://localhost:8000/recipes/meal-plan/", {
           day: dayIndex,
           recipe: recipee,
         });

@@ -165,7 +165,7 @@ const RecipeList = () => {
   }, [selectedCategory, selectedCookTime, recipeList])
 
   const gotoRecipe = (id: string) => {
-    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
+    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id))
     navigateTo('/recipe-details/' + id)
   }
 
@@ -177,7 +177,7 @@ const RecipeList = () => {
       sessionStorage.getItem('ingredients') || '[]'
     )
     dispatch(
-      getRecipeListInitiator('http://localhost:8000/recipe/search/', {
+      getRecipeListInitiator('http://localhost:8000/recipes/search/', {
         ingredients: ingredientsArray,
         page: value,
       })

@@ -80,7 +80,7 @@ const SmartShoppingList: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8000/recipe/shopping-list');
+      const response = await axios.get('http://localhost:8000/shopping-list');
       console.log('Shopping list response:', response.data); // Debug log
       
       if (response.data && Array.isArray(response.data.shopping_list)) {
@@ -123,7 +123,7 @@ const SmartShoppingList: React.FC = () => {
 
       console.log('Sending item to add:', newItemData); // Debug log
       const response = await axios.post(
-        'http://localhost:8000/recipe/shopping-list/update',
+        'http://localhost:8000/shopping-list/update',
         [newItemData]
       )
       console.log('Add item response:', response.data); // Debug log
@@ -158,7 +158,7 @@ const SmartShoppingList: React.FC = () => {
 
     try {
       await axios.put(
-        `http://localhost:8000/recipe/shopping-list/${itemId}`,
+        `http://localhost:8000/shopping-list/${itemId}`,
         updatedItem
       )
 
@@ -172,7 +172,7 @@ const SmartShoppingList: React.FC = () => {
 
   const deleteItem = async (itemId: string) => {
     try {
-      await axios.delete(`http://localhost:8000/recipe/shopping-list/${itemId}`)
+      await axios.delete(`http://localhost:8000/shopping-list/${itemId}`)
       setListItems((prevItems) =>
         prevItems.filter((item) => item._id !== itemId)
       )
