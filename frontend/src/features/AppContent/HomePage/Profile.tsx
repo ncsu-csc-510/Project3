@@ -14,22 +14,6 @@ interface ProfileData {
   targetDate?: string;
   dietaryRestrictions?: string[];
 }
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import "./Profile.css";
-
-interface ProfileData {
-  name: string;
-  email: string;
-  age: number;
-  weight: number;
-  height: number;
-  activityLevel: string;
-  goal: string;
-  goalWeight?: number;
-  targetDate?: string;
-  dietaryRestrictions?: string[];
-}
 
 const Profile: React.FC = () => {
   // Initialize state with empty values
