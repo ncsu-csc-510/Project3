@@ -27,6 +27,7 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
+  Slider
 } from '@mui/material'
 import { BrowserRouter as Router } from 'react-router-dom';
 import StarIcon from '@mui/icons-material/Star'
@@ -135,6 +136,7 @@ const RecipeInformationWrapped = () => {
   const navigate = useNavigate(); // For redirecting to Meal Plan page
   let { id } = useParams()
   const dispatch = useDispatch()
+  const [servings, setServings] = useState(1);
   const [input, setInput] = useState('')
   const [response, setResponse] = useState('')
   const [showInput, setShowInput] = useState(false)
@@ -365,6 +367,21 @@ style={{
           <Paper elevation={24} style={triviaPaperStyles}>
             <Grid container spacing={3} style={{ background: theme.background, color: theme.color,  }}>
               <Grid item xs={12} style={{ textAlign: 'center', color: theme.color, background: theme.background}}>
+                <div style={{ marginBottom: '20px' }}>
+                  <Typography variant="h6" gutterBottom>
+                    Servings: {servings}
+                  </Typography>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={servings}
+                    onChange={(e) => setServings(Number(e.target.value))}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
                 <Typography variant="h5" gutterBottom style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   Summary
                     <RecipeFavoriteButton recipe={recipe} />
@@ -372,16 +389,54 @@ style={{
 
               </Grid>
               <Grid item xs={12} textAlign={'left'} style={{ background: theme.background, color: theme.color,  }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <Typography variant="body1">Servings: {servings}</Typography>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    value={servings}
+                    onChange={(e) => setServings(Number(e.target.value))}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
                 <Typography variant="h6">
                   Ingredients:
                   <Typography variant="subtitle1" gutterBottom>
-                    {recipe?.ingredients?.map((ele: any, idx: number) => {
+                    {recipe?.ingredients?.map((ele: string, idx: number) => {
+                      // Try to extract a quantity at the start like "2", "1/2", or "3.5"
+                      const match = ele.match(/^([\d/.]+)\s+(.*)/); // e.g., "1/2 cup sugar"
+
+                      let updatedIngredient = ele;
+
+                      if (match) {
+                        const quantityStr = match[1];  // e.g., "1/2"
+                        const rest = match[2];         // e.g., "cup sugar"
+
+                        let quantity: number;
+
+                        try {
+                          if (quantityStr.includes('/')) {
+                            const parts = quantityStr.split('/');
+                            quantity = parseFloat(parts[0]) / parseFloat(parts[1]);
+                          } else {
+                            quantity = parseFloat(quantityStr);
+                          }
+
+                          const newQuantity = (quantity * servings).toFixed(2);
+                          updatedIngredient = `${newQuantity} ${rest}`;
+                        } catch (e) {
+                          updatedIngredient = ele; // fallback in case of error
+                        }
+                      }
+
                       return (
                         <>
-                          {ele}
+                          {updatedIngredient}
                           {recipe?.ingredients?.length - 1 === idx ? `` : `, `}
                         </>
-                      )
+                      );
                     })}
                   </Typography>
                 </Typography>
@@ -412,19 +467,19 @@ style={{
                   <Typography variant="h6">
                     Sugar:
                     <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.sugar}g
+                      {(recipe?.sugar * servings).toFixed(2)}g
                     </Typography>
                   </Typography>
                   <Typography variant="h6">
                     Carbs:
                     <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.carbs}g
+                      {(recipe?.carbs * servings).toFixed(2)}g
                     </Typography>
                   </Typography>
                   <Typography variant="h6">
                     Proteins:
                     <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.protein}g
+                      {(recipe?.protein * servings).toFixed(2)}g
                     </Typography>
                   </Typography>
                 </Stack>
@@ -691,6 +746,7 @@ style={{
 }
 
 const RecipeInformation = () => {
+  
   return (
     <Provider store={store}>
       <RecipeInformationWrapped />
