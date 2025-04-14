@@ -40,6 +40,7 @@ import { getRecipeInfoInitiator } from './getRecipeInformation.action'
 import './RecipeInformation.css'
 import noImage from './no-image.png'
 import { FaWhatsapp, FaSlack, FaDiscord } from 'react-icons/fa'
+import InteractiveCookingMode from '../../../components/InteractiveCookingMode';
 
 import axios from 'axios'
 
@@ -143,18 +144,11 @@ const RecipeInformationWrapped = () => {
   const [openModal, setOpenModal] = useState<boolean>(false)
   const [selectedPlatform, setSelectedPlatform] = useState('slack')
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [showInteractiveMode, setShowInteractiveMode] = useState(false);
 
   const handleShareClick = (urlId: string, platform: 'slack' | 'discord') => {
     setOpenModal(true)
     setSelectedPlatform(platform)
-  }
-
-  const handleButtonClick = () => {
-    setShowInput(true)
-  }
-
-  const handleInputChange = (e: any) => {
-    setInput(e.target.value)
   }
 
   // accesses the state of the component from the app's store
@@ -200,74 +194,30 @@ const RecipeInformationWrapped = () => {
   /* the effect hook below does an api call to get the recipe details
       using the recipe id as soon as the compnent gets loaded up */
   useEffect(() => {
-    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
-  }, [dispatch, id])
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) {
+      navigate('/login');
+      return;
+    }
+    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id));
+  }, [dispatch, id, navigate]);
 
   if (recipeInfo.isGetRecipeInfoLoading) {
     return <div data-testid="loading-spinner"> Loading ... </div>
-  }  else if (recipeInfo.isGetRecipeInfoError) {
+  } else if (recipeInfo.isGetRecipeInfoFailure) {
+    // Check if the error is authentication related and redirect to login
+    const error = recipeInfo.getRecipeInfoError;
+    if (error && error.includes('401')) {
+      navigate('/login');
+      return null;
+    }
     return <div data-testid="error-message">Failed to load recipe data</div>;
   } else if (recipeInfo.isGetRecipeInfoSuccess) {
     const recipe = recipeInfo.getRecipeInfoData // The recipe object containing all necessary information
-    const recipeDetailsforLLM = `
-      Name: ${recipe.name}
-      Ingredients: ${Array.isArray(recipe.ingredients) ? recipe.ingredients.join(', ') : 'No ingredients available'}
-      Rating: ${recipe.rating}
-      Rating: ${recipe.rating}
-      Prep Time: ${recipe.prepTime}
-      Sugar: ${recipe.sugar}g
-      Carbs: ${recipe.carbs}g
-      Protein: ${recipe.protein}g
-      Cuisine: ${recipe.category}
-      Servings: ${recipe.servings}
-      Cook Time: ${recipe.cookTime}
-      Cholesterol: ${recipe.cholesterol}mg/dl
-      Fat: ${recipe.fat}g
-      Instructions: ${Array.isArray(recipe.instructions) ? recipe.instructions.join(' ') : 'No instructions available'}
-    `
-    const handleSubmit = async () => {
-      try {
-        const result = await axios.post(
-          'http://localhost:8000/recipe/recommend-recipes/',
-          { query: input, context: recipeDetailsforLLM }
-        )
-        setResponse(result.data.response)
-      } catch (error) {
-        console.error('Error fetching recipe recommendations:', error)
-      }
-    }
-    // Function to handle formatting
-    const formatText = (text: string) => {
-      return text.split('\n').map((line, index) => {
-        // Check for "**" bold markers first
-        const boldRegex = /\*\*(.*?)\*\*/g
-        let formattedLine = line
-        if (boldRegex.test(line)) {
-          // Replace "**text**" with <strong>text</strong>
-          formattedLine = line.replace(
-            boldRegex,
-            (match, p1) => `<strong>${p1}</strong>`
-          )
-        }
-
-        // Check if the line starts with "*", convert to list items
-        if (formattedLine.trim().startsWith('*')) {
-          return <li key={index}>{formattedLine.replace('*', '').trim()}</li>
-        }
-
-        // Return as a paragraph for other lines
-        return (
-          <p
-            key={index}
-            dangerouslySetInnerHTML={{ __html: formattedLine }}
-          ></p>
-        )
-      })
-    }
 
     const handleAddToMealPlan = async (recipee: any, dayIndex: number) => {
       try {
-        const responsee = await axios.post("http://localhost:8000/recipe/meal-plan/", {
+        const responsee = await axios.post("http://localhost:8000/recipes/meal-plan/", {
           day: dayIndex,
           recipe: recipee,
         });
@@ -281,9 +231,19 @@ const RecipeInformationWrapped = () => {
       }
     };
 
+    const startInteractiveCooking = () => {
+      setShowInteractiveMode(true);
+    };
+
     return (
       <div
-        style={{ width: '100vw', color: theme.color, paddingTop: '20px', background: theme.background }}
+        style={{ 
+          width: '100%', 
+          color: theme.color, 
+          background: theme.background,
+          minHeight: '100vh',
+          padding: '40px 20px'
+        }}
         data-testid="RecipeInfo-comp-43"
       >
         {openModal && (
@@ -294,450 +254,682 @@ const RecipeInformationWrapped = () => {
             platform={selectedPlatform}
           />
         )}
-       <Typography variant="h4" gutterBottom className="recipe-header">
-  {recipe.name}
-</Typography>
-<div style={{ marginTop: '10px' }}>
-<select
-style={{
-  backgroundColor: theme.headerColor,
-  color: theme.color,
-  border: `1px solid ${theme.headerColor}`,
-  borderRadius: '4px',
-  padding: '8px 12px',
-  marginRight: '10px',
-  fontSize: '16px',
-  transition: 'transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease',
-  cursor: 'pointer',
-}}
-  onChange={(e) => setSelectedDayIndex(Number(e.target.value))}
-  value={selectedDayIndex}
->
-  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => (
-    <option key={index} value={index} style={{
-      backgroundColor: theme.background,
-      color: theme.color,
-      fontSize: '16px',
-    }}>
-      {day}
-    </option>
-  ))}
-</select>
-  <Button
-    variant="contained"
-    style={{
-      backgroundColor: theme.headerColor,
-      color: theme.color,
-      marginRight: '10px',
-      transition: 'transform 0.2s ease, background-color 0.2s ease',
-    }}
-    onMouseEnter={(e) =>
-      (e.currentTarget.style.backgroundColor = theme.background)
-    }
-    onMouseLeave={(e) =>
-      (e.currentTarget.style.backgroundColor = theme.headerColor)
-    }
-    onClick={() => handleAddToMealPlan(recipe, selectedDayIndex)}
-  >
-    Add to Meal Plan
-  </Button>
-  <Button
-    variant="outlined"
-    style={{
-      borderColor: theme.headerColor,
-      color: theme.headerColor,
-      transition: 'transform 0.2s ease, border-color 0.2s ease',
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.color = theme.color;
-      e.currentTarget.style.borderColor = theme.color;
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.color = theme.headerColor;
-      e.currentTarget.style.borderColor = theme.headerColor;
-    }}
-    onClick={() => navigate('/meal')}
-  >
-    Go to Meal Plan
-  </Button>
-</div>
-
         
-        <div style={{ float: 'left', width: '30vw',color: theme.color , background: theme.background}}>
-          <Paper elevation={24} style={triviaPaperStyles}>
-            <Grid container spacing={3} style={{ background: theme.background, color: theme.color,  }}>
-              <Grid item xs={12} style={{ textAlign: 'center', color: theme.color, background: theme.background}}>
-                <div style={{ marginBottom: '20px' }}>
-                  <Typography variant="h6" gutterBottom>
-                    Servings: {servings}
-                  </Typography>
-                  <input
-                    type="range"
-                    min={1}
-                    max={10}
-                    step={1}
-                    value={servings}
-                    onChange={(e) => setServings(Number(e.target.value))}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
-                <Typography variant="h5" gutterBottom style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  Summary
-                    <RecipeFavoriteButton recipe={recipe} />
-                </Typography>
-
-              </Grid>
-              <Grid item xs={12} textAlign={'left'} style={{ background: theme.background, color: theme.color,  }}>
-                <div style={{ marginBottom: '10px' }}>
-                  <Typography variant="body1">Servings: {servings}</Typography>
-                  <input
-                    type="range"
-                    min={1}
-                    max={10}
-                    value={servings}
-                    onChange={(e) => setServings(Number(e.target.value))}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
-                <Typography variant="h6">
-                  Ingredients:
-                  <Typography variant="subtitle1" gutterBottom>
-                    {recipe?.ingredients?.map((ele: string, idx: number) => {
-                      // Try to extract a quantity at the start like "2", "1/2", or "3.5"
-                      const match = ele.match(/^([\d/.]+)\s+(.*)/); // e.g., "1/2 cup sugar"
-
-                      let updatedIngredient = ele;
-
-                      if (match) {
-                        const quantityStr = match[1];  // e.g., "1/2"
-                        const rest = match[2];         // e.g., "cup sugar"
-
-                        let quantity: number;
-
-                        try {
-                          if (quantityStr.includes('/')) {
-                            const parts = quantityStr.split('/');
-                            quantity = parseFloat(parts[0]) / parseFloat(parts[1]);
-                          } else {
-                            quantity = parseFloat(quantityStr);
-                          }
-
-                          const newQuantity = (quantity * servings).toFixed(2);
-                          updatedIngredient = `${newQuantity} ${rest}`;
-                        } catch (e) {
-                          updatedIngredient = ele; // fallback in case of error
-                        }
-                      }
-
-                      return (
-                        <>
-                          {updatedIngredient}
-                          {recipe?.ingredients?.length - 1 === idx ? `` : `, `}
-                        </>
-                      );
-                    })}
-                  </Typography>
-                </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Stack
-                  direction="column"
-                  spacing={2}
-                  paddingBottom="20px"
-                  textAlign={'left'}
-                >
-                  <Typography variant="h6">
-                    Rating:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {Array.from({
-                        length: Math.floor(Number(recipe?.rating)),
-                      }).map((ele: any) => {
-                        return <StarIcon fontSize="small" />
-                      })}
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Prep Time:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.prepTime}
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Sugar:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {(recipe?.sugar * servings).toFixed(2)}g
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Carbs:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {(recipe?.carbs * servings).toFixed(2)}g
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Proteins:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {(recipe?.protein * servings).toFixed(2)}g
-                    </Typography>
-                  </Typography>
-                </Stack>
-              </Grid>
-              <Grid item xs={6}>
-                <Stack
-                  direction="column"
-                  spacing={2}
-                  paddingBottom="20px"
-                  textAlign={'left'}
-                >
-                  <Typography variant="h6">
-                    Cuisine:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.category}
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Servings:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.servings}
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Cook Time:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.cookTime}
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Cholestrol:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.cholesterol}mg/dl
-                    </Typography>
-                  </Typography>
-                  <Typography variant="h6">
-                    Fats:
-                    <Typography variant="subtitle1" gutterBottom>
-                      {recipe?.fat}g
-                    </Typography>
-                  </Typography>
-                </Stack>
-              </Grid>
-              <Grid
-                item
-                xs={12}
+        <div className="recipe-header">
+          <Typography 
+            variant="h3" 
+            component="h1" 
+            style={{
+              fontWeight: 600,
+              background: `linear-gradient(45deg, ${theme.color}, ${theme.headerColor})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '10px'
+            }}
+          >
+            {recipe.name}
+          </Typography>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <StarIcon sx={{ color: '#FFD700' }} />
+            <Typography variant="h6" style={{ color: theme.color }}>
+              {recipe.rating}/5.0
+            </Typography>
+          </div>
+        </div>
+        
+        <div style={{ 
+          marginBottom: '30px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '15px',
+          flexWrap: 'wrap'
+        }}>
+          <select
+            style={{
+              backgroundColor: 'transparent',
+              color: theme.color,
+              border: `2px solid ${theme.headerColor}`,
+              borderRadius: '8px',
+              padding: '12px 20px',
+              fontSize: '16px',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+            onChange={(e) => setSelectedDayIndex(Number(e.target.value))}
+            value={selectedDayIndex}
+          >
+            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => (
+              <option 
+                key={index} 
+                value={index} 
                 style={{
-                  marginTop: '20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  
+                  backgroundColor: theme.background,
+                  color: theme.color,
+                  fontSize: '16px',
+                  padding: '8px'
                 }}
               >
-                <button
-                  onClick={() => shareOnWhatsApp(window.location.href)} // Generates a WhatsApp sharing link for the recipe
-                  style={{
-                    backgroundColor: '#25D366',
-                    color: 'white',
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = 'scale(1.05)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = 'scale(1)')
-                  }
-                >
-                  <FaWhatsapp
-                    style={{ marginRight: '10px', fontSize: '1.2em' }}
-                  />
-                  WhatsApp
-                </button>
-                <button
-                  onClick={() =>
-                    handleShareClick(window.location.href, 'slack')
-                  }
-                  style={{
-                    backgroundColor: '#7C3085',
-                    color: 'white',
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = 'scale(1.05)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = 'scale(1)')
-                  }
-                >
-                  <FaSlack style={{ marginRight: '10px', fontSize: '1.2em' }} />
-                  Slack
-                </button>
-                <button
-                  onClick={() =>
-                    handleShareClick(window.location.href, 'discord')
-                  }
-                  style={{
-                    backgroundColor: '#5865F2',
-                    color: 'white',
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = 'scale(1.05)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = 'scale(1)')
-                  }
-                >
-                  <FaDiscord
-                    style={{ marginRight: '10px', fontSize: '1.2em' }}
-                  />
-                  Discord
-                </button>
-              </Grid>
-
-            </Grid>
-          </Paper>
+                {day}
+              </option>
+            ))}
+          </select>
+          
+          <Button
+            variant="contained"
+            style={{
+              backgroundColor: theme.headerColor,
+              color: theme.color,
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 500,
+              transition: 'all 0.3s ease',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.background;
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme.headerColor;
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            onClick={() => handleAddToMealPlan(recipe, selectedDayIndex)}
+          >
+            Add to Meal Plan
+          </Button>
+          
+          <Button
+            variant="outlined"
+            style={{
+              borderColor: theme.headerColor,
+              color: theme.headerColor,
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 500,
+              transition: 'all 0.3s ease',
+              textTransform: 'none',
+              borderWidth: '2px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = theme.color;
+              e.currentTarget.style.borderColor = theme.color;
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = theme.headerColor;
+              e.currentTarget.style.borderColor = theme.headerColor;
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            onClick={() => navigate('/meal')}
+          >
+            View Meal Plan
+          </Button>
         </div>
-        <div style={{ float: 'left', width: '40vw', marginTop: '15px' , }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Stack
-                direction="column"
-                spacing={2}
-                paddingBottom="20px"
-                textAlign={'left'}
+
+        <div className="recipe-container">
+          <div className="recipe-summary-column">
+            <Paper 
+              elevation={0} 
+              className="summary-paper" 
+              style={{ 
+                background: theme.background,
+                color: theme.color,
+                border: `1px solid ${theme.headerColor}30`
+              }}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={12} style={{ textAlign: 'center' }}>
+                  <div style={{ 
+                    marginBottom: '30px',
+                    padding: '20px',
+                    background: `${theme.headerColor}10`,
+                    borderRadius: '12px'
+                  }}>
+                    <Typography variant="h6" gutterBottom style={{ marginBottom: '15px' }}>
+                      Servings: {servings}
+                    </Typography>
+                    <Slider
+                      value={servings}
+                      min={1}
+                      max={10}
+                      step={1}
+                      onChange={(_, value) => setServings(value as number)}
+                      sx={{
+                        color: theme.headerColor,
+                        '& .MuiSlider-thumb': {
+                          width: 20,
+                          height: 20,
+                          backgroundColor: theme.headerColor,
+                          '&:hover, &.Mui-focusVisible': {
+                            boxShadow: `0 0 0 8px ${theme.headerColor}20`
+                          }
+                        },
+                        '& .MuiSlider-rail': {
+                          opacity: 0.3
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    marginBottom: '20px',
+                    padding: '15px',
+                    background: `${theme.headerColor}10`,
+                    borderRadius: '12px'
+                  }}>
+                    <Typography variant="h5">
+                      Recipe Details
+                    </Typography>
+                    <RecipeFavoriteButton recipe={recipe} />
+                  </div>
+                </Grid>
+                <Grid item xs={12} textAlign={'left'} style={{ background: theme.background, color: theme.color }}>
+                  <div style={{ 
+                    padding: '20px',
+                    background: `${theme.headerColor}10`,
+                    borderRadius: '12px',
+                    marginBottom: '20px'
+                  }}>
+                    <Typography 
+                      variant="h6" 
+                      style={{
+                        marginBottom: '15px',
+                        borderBottom: `2px solid ${theme.headerColor}30`,
+                        paddingBottom: '10px'
+                      }}
+                    >
+                      Ingredients
+                    </Typography>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                      gap: '12px'
+                    }}>
+                      {recipe?.ingredients?.map((ele: string, idx: number) => {
+                        const match = ele.match(/^([\d/.]+)\s+(.*)/);
+                        let updatedIngredient = ele;
+
+                        if (match) {
+                          const quantityStr = match[1];
+                          const rest = match[2];
+                          let quantity: number;
+
+                          try {
+                            if (quantityStr.includes('/')) {
+                              const parts = quantityStr.split('/');
+                              quantity = parseFloat(parts[0]) / parseFloat(parts[1]);
+                            } else {
+                              quantity = parseFloat(quantityStr);
+                            }
+
+                            const newQuantity = (quantity * servings).toFixed(2);
+                            updatedIngredient = `${newQuantity} ${rest}`;
+                          } catch (e) {
+                            updatedIngredient = ele;
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: '10px 15px',
+                              background: theme.background,
+                              border: `1px solid ${theme.headerColor}30`,
+                              borderRadius: '8px',
+                              fontSize: '0.95rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              transition: 'all 0.3s ease'
+                            }}
+                          >
+                            <span style={{ 
+                              width: '6px', 
+                              height: '6px', 
+                              borderRadius: '50%', 
+                              background: theme.headerColor,
+                              flexShrink: 0
+                            }} />
+                            {updatedIngredient}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </Grid>
                 
-              >
-                <div data-testid="help-icon"
-                className="helper-text" style={{ color: theme.color }}>
-                  Tap on any step below to hear the instructions read aloud.
-                  Follow along with the recipe as you cook, and feel free to
-                  pause or repeat any step!
-                </div>
-                <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="voiceSelector" style={{ marginRight: '10px' }}>
-          Select Voice:
-        </label>
-        <select
-          id="voiceSelector"
-          style={{ backgroundColor: theme.headerColor, 
-            color: theme.color, 
-            borderColor: theme.color,
-            padding: '10px 20px',
-            borderRadius: '5px',
-            boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-            transition: 'transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease',
-  cursor: 'pointer', }}
-          onChange={(e) => {
-            const selected = availableVoices.find((voice) => voice.name === e.target.value);
-            setSelectedVoice(selected || null);
-          }}
-          value={selectedVoice?.name || ''}
-        >
-          {availableVoices.map((voice) => (
-            <option key={voice.name} value={voice.name}>
-              {voice.name} ({voice.lang})
-            </option>
-          ))}
-        </select>
-      </div>
-                {Array.isArray(recipe?.instructions) && recipe.instructions.map((inst: string, idx: number) => (
-                  <div
-                  style={{  backgroundColor: theme.background, // Card background from theme
-                    color: theme.color, // Card text color
-                    borderColor: theme.headerColor,
-                    borderWidth: '2px', // Set the desired border thickness
-                    borderStyle: 'solid',
-                   }}
-                                      key={idx}
-                    className="step"
-                    onClick={() => speakInstructions(inst)}
-                  >
+                <Grid item xs={6}>
+                  <Stack direction="column" spacing={2} paddingBottom="20px" textAlign={'left'}>
                     <Typography variant="h6">
-                      Step {idx + 1}:
+                      Rating:
                       <Typography variant="subtitle1" gutterBottom>
-                        {inst}
+                        {Array.from({ length: Math.floor(Number(recipe?.rating)) }).map((_, idx) => (
+                          <StarIcon key={idx} fontSize="small" />
+                        ))}
                       </Typography>
                     </Typography>
+                    <Typography variant="h6">
+                      Prep Time:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {recipe?.prepTime}
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Sugar:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {(recipe?.sugar * servings).toFixed(2)}g
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Carbs:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {(recipe?.carbs * servings).toFixed(2)}g
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Proteins:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {(recipe?.protein * servings).toFixed(2)}g
+                      </Typography>
+                    </Typography>
+                  </Stack>
+                </Grid>
+                
+                <Grid item xs={6}>
+                  <Stack direction="column" spacing={2} paddingBottom="20px" textAlign={'left'}>
+                    <Typography variant="h6">
+                      Cuisine:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {recipe?.category}
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Servings:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {recipe?.servings}
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Cook Time:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {recipe?.cookTime}
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Cholesterol:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {recipe?.cholesterol}mg/dl
+                      </Typography>
+                    </Typography>
+                    <Typography variant="h6">
+                      Fats:
+                      <Typography variant="subtitle1" gutterBottom>
+                        {recipe?.fat}g
+                      </Typography>
+                    </Typography>
+                  </Stack>
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <div className="sharing-buttons">
+                    <button
+                      onClick={() => shareOnWhatsApp(window.location.href)}
+                      style={{
+                        backgroundColor: '#25D366',
+                        color: 'white',
+                        padding: '10px 15px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                      <FaWhatsapp style={{ marginRight: '5px', fontSize: '1.2em' }} />
+                      WhatsApp
+                    </button>
+                    <button
+                      onClick={() => handleShareClick(window.location.href, 'slack')}
+                      style={{
+                        backgroundColor: '#7C3085',
+                        color: 'white',
+                        padding: '10px 15px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                      <FaSlack style={{ marginRight: '5px', fontSize: '1.2em' }} />
+                      Slack
+                    </button>
+                    <button
+                      onClick={() => handleShareClick(window.location.href, 'discord')}
+                      style={{
+                        backgroundColor: '#5865F2',
+                        color: 'white',
+                        padding: '10px 15px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    >
+                      <FaDiscord style={{ marginRight: '5px', fontSize: '1.2em' }} />
+                      Discord
+                    </button>
                   </div>
-                ))}
-              </Stack>
-              <Stack
-                direction="column"
-                spacing={2}
-                paddingBottom="20px"
-                textAlign={'left'}
+                </Grid>
+              </Grid>
+            </Paper>
+          </div>
+          
+          {/* Steps Column */}
+          <div className="recipe-steps-column">
+            <Paper 
+              elevation={0} 
+              style={{ 
+                background: theme.background,
+                color: theme.color,
+                border: `1px solid ${theme.headerColor}30`,
+                borderRadius: '15px',
+                padding: '25px'
+              }}
+            >
+              <Typography 
+                variant="h5" 
+                gutterBottom 
+                style={{
+                  marginBottom: '25px',
+                  borderBottom: `2px solid ${theme.headerColor}30`,
+                  paddingBottom: '15px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
               >
+                Cooking Instructions
                 <Button
-                  onClick={handleButtonClick}
                   variant="contained"
-                  color="primary"
-                  style={{ width: '200px', color:theme.color, background: theme.headerColor }}
+                  onClick={startInteractiveCooking}
+                  style={{
+                    backgroundColor: theme.headerColor,
+                    color: theme.color,
+                    textTransform: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    transition: 'all 0.3s ease'
+                  }}
                 >
-                  CUSTOMIZE
+                  Start Cooking
                 </Button>
-                {showInput && (
-                  <div className="input-group"  style={{  backgroundColor: theme.headerColor, // Card background from theme
-                    color: theme.color, // Card text color
-                    
-                   }} >
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={handleInputChange}
-                      className="input-textbox"
-                    />
-                    {input.length > 0 && (
-                      <button
-                        onClick={handleSubmit}
-                        className="submit-button"
-                      ></button>
-                    )}
+              </Typography>
+
+              <div style={{ marginBottom: '20px' }}>
+                <div className="voice-selector-container">
+                  <Typography variant="body1" style={{ marginRight: '15px' }}>
+                    Select Voice:
+                  </Typography>
+                  <select
+                    value={selectedVoice?.name || ''}
+                    onChange={(e) => {
+                      const voice = availableVoices.find(v => v.name === e.target.value);
+                      setSelectedVoice(voice || null);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${theme.headerColor}30`,
+                      background: 'transparent',
+                      color: theme.color,
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {availableVoices.map((voice) => (
+                      <option key={voice.name} value={voice.name}>
+                        {voice.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {recipe?.instructions?.map((step: string, index: number) => (
+                <div
+                  key={index}
+                  className="step"
+                  onClick={() => speakInstructions(step)}
+                  style={{
+                    position: 'relative',
+                    padding: '20px 25px',
+                    background: `${theme.headerColor}10`,
+                    borderRadius: '12px',
+                    marginBottom: '15px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    border: `1px solid ${theme.headerColor}20`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateX(10px)';
+                    e.currentTarget.style.background = `${theme.headerColor}20`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateX(0)';
+                    e.currentTarget.style.background = `${theme.headerColor}10`;
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    left: '-10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '24px',
+                    height: '24px',
+                    background: theme.headerColor,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: theme.background,
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold'
+                  }}>
+                    {index + 1}
+                  </div>
+                  <Typography style={{ paddingLeft: '20px' }}>
+                    {step}
+                  </Typography>
+                </div>
+              ))}
+            </Paper>
+          </div>
+          
+          {/* Images Column */}
+          <div className="recipe-images-column">
+            <Paper 
+              elevation={0} 
+              style={{ 
+                background: theme.background,
+                color: theme.color,
+                border: `1px solid ${theme.headerColor}30`,
+                borderRadius: '15px',
+                padding: '25px',
+                height: '100%'
+              }}
+            >
+              <Typography 
+                variant="h5" 
+                gutterBottom 
+                style={{
+                  marginBottom: '25px',
+                  borderBottom: `2px solid ${theme.headerColor}30`,
+                  paddingBottom: '15px'
+                }}
+              >
+                Recipe Gallery
+              </Typography>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: '20px',
+                maxHeight: 'calc(100vh - 250px)',
+                overflowY: 'auto',
+                padding: '5px',
+                scrollbarWidth: 'thin',
+                scrollbarColor: `${theme.headerColor}30 transparent`
+              }}>
+                {recipe?.images?.length > 0 ? (
+                  recipe.images.map((image: string, index: number) => (
+                    <div
+                      key={index}
+                      style={{
+                        position: 'relative',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+                      }}
+                    >
+                      <img
+                        src={image || noImage}
+                        alt={`Recipe step ${index + 1}`}
+                        className="recipe-image"
+                        style={{
+                          width: '100%',
+                          height: '250px',
+                          objectFit: 'cover',
+                          margin: 0
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        padding: '15px',
+                        background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                        color: '#fff'
+                      }}>
+                        <Typography variant="subtitle1">
+                          Step {index + 1}
+                        </Typography>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{
+                    padding: '30px',
+                    textAlign: 'center',
+                    background: `${theme.headerColor}10`,
+                    borderRadius: '12px',
+                    border: `1px dashed ${theme.headerColor}30`
+                  }}>
+                    <Typography variant="body1" style={{ opacity: 0.7 }}>
+                      No images available for this recipe
+                    </Typography>
                   </div>
                 )}
-                <Typography variant="subtitle1" gutterBottom>
-                  {formatText(response)}
+              </div>
+
+              <div style={{
+                marginTop: '25px',
+                padding: '20px',
+                background: `${theme.headerColor}10`,
+                borderRadius: '12px',
+                textAlign: 'center'
+              }}>
+                <Typography variant="h6" gutterBottom>
+                  Share Recipe
                 </Typography>
-              </Stack>
-            </Grid>
-          </Grid>
+                <div className="sharing-buttons">
+                  <IconButton
+                    onClick={() => shareOnWhatsApp(`https://cookbook-alpha.vercel.app/recipe-details/${id}`)}
+                    style={{
+                      background: theme.background,
+                      border: `1px solid ${theme.headerColor}30`,
+                      padding: '12px'
+                    }}
+                  >
+                    <FaWhatsapp size={20} color={theme.headerColor} />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => shareOnPlatform(`https://cookbook-alpha.vercel.app/recipe-details/${id}`, 'slack')}
+                    style={{
+                      background: theme.background,
+                      border: `1px solid ${theme.headerColor}30`,
+                      padding: '12px'
+                    }}
+                  >
+                    <FaSlack size={20} color={theme.headerColor} />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => shareOnPlatform(`https://cookbook-alpha.vercel.app/recipe-details/${id}`, 'discord')}
+                    style={{
+                      background: theme.background,
+                      border: `1px solid ${theme.headerColor}30`,
+                      padding: '12px'
+                    }}
+                  >
+                    <FaDiscord size={20} color={theme.headerColor} />
+                  </IconButton>
+                </div>
+              </div>
+            </Paper>
+          </div>
         </div>
-        <div style={{ float: 'left', width: '30vw' , color: theme.color, background:theme.headerColor}}>
-          {recipe?.images?.length > 0 && recipe?.images[0] !== '' ? (
-            <Typography variant="subtitle1" gutterBottom>
-              <Stack direction="column" spacing={2} padding="25px">
-                {recipe.images
-                  .reverse()
-                  .slice(0, 3)
-                  .map((imageLink: string, idx: number) => {
-                    imageLink = imageLink.replaceAll('"', '')
-                    return (
-                      <img
-                        src={imageLink}
-                        alt={`Cannot display pic ${idx + 1}`}
-                      />
-                    )
-                  })}
-              </Stack>
-            </Typography>
-          ) : (
-            <img src={noImage} alt={`Cannot display pic`} />
-          )}
+        
+        <div style={{ textAlign: 'center', marginTop: '20px', marginBottom: '30px' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => startInteractiveCooking()}
+            sx={{ 
+              backgroundColor: theme.headerColor,
+              color: theme.color,
+              padding: '10px 20px',
+              '&:hover': {
+                backgroundColor: theme.color,
+                color: theme.background,
+              }
+            }}
+          >
+            Start Interactive Cooking Mode
+          </Button>
         </div>
+
+        {showInteractiveMode && (
+          <InteractiveCookingMode
+            recipe={recipe}
+            onClose={() => setShowInteractiveMode(false)}
+          />
+        )}
       </div>
     )
   } else {

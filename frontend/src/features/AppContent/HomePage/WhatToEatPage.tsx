@@ -106,7 +106,7 @@ const WhatToEatPage: React.FC = () => {
         return;
       }
 
-      const response = await httpGetRequest(`http://localhost:8000/recipe/recipes?email=${userEmail}`);
+      const response = await httpGetRequest(`http://localhost:8000/recipes/recipes?email=${userEmail}`);
       if (response && Array.isArray(response.recipes)) {
         setUserRecipes(response.recipes);
       } else {
@@ -161,7 +161,7 @@ const WhatToEatPage: React.FC = () => {
       // Add user's saved recipes to the context
       const context = `${recipeContext} Please provide 3-5 specific recipe recommendations with detailed instructions, ingredients, and cooking times.`;
 
-      const response = await httpPostRequest('http://localhost:8000/recipe/recommend-recipes/', {
+      const response = await httpPostRequest('http://localhost:8000/recipes/recommend-recipes/', {
         query,
         context
       });
@@ -211,7 +211,7 @@ const WhatToEatPage: React.FC = () => {
       const query = `Today is ${now.toLocaleDateString()} and it's ${season}. I'm looking for seasonal recipe recommendations for today.`;
       const context = `Please provide 3-5 seasonal recipe recommendations for ${season} with detailed instructions, ingredients, and cooking times. Include information about why these recipes are good for the current season.`;
 
-      const response = await httpPostRequest('http://localhost:8000/recipe/recommend-recipes/', {
+      const response = await httpPostRequest('http://localhost:8000/recipes/recommend-recipes/', {
         query,
         context
       });
@@ -535,7 +535,7 @@ const WhatToEatPage: React.FC = () => {
       };
       
       // Send the recipe to the backend using the correct endpoint
-      const response = await httpPostRequest(`http://localhost:8000/recipe?email=${userEmail}`, recipeToSave);
+      const response = await httpPostRequest(`http://localhost:8000/recipes?email=${userEmail}`, recipeToSave);
       
       if (response && response._id) {
         showSnackbar('Recipe saved successfully!', 'success');

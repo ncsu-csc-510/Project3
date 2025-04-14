@@ -45,7 +45,7 @@ const MealPage = () => {
     const fetchMealPlan = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('http://localhost:8000/recipe/meal-plan/')
+        const response = await axios.get('http://localhost:8000/recipes/meal-plan/')
         const updatedMealPlan = Array(7).fill(null)
         
         // The backend returns an array where each element is either null or a meal plan entry
@@ -76,7 +76,7 @@ const MealPage = () => {
 
   const handleDeleteMeal = async (dayIndex: number) => {
     try {
-      await axios.delete(`http://localhost:8000/recipe/meal-plan/${dayIndex}`)
+      await axios.delete(`http://localhost:8000/recipes/meal-plan/${dayIndex}`)
       const updatedMealPlan = [...mealPlan]
       updatedMealPlan[dayIndex] = null
       setMealPlan(updatedMealPlan)
@@ -179,7 +179,7 @@ const MealPage = () => {
 
       // Add to shopping list
       if (shoppingItems.length > 0) {
-        const response = await axios.post('http://localhost:8000/recipe/shopping-list/update', shoppingItems);
+        const response = await axios.post('http://localhost:8000/shopping-list/update', shoppingItems);
         console.log('Shopping list update response:', response.data);  // Debug log
         
         if (response.data && response.data.shopping_list) {

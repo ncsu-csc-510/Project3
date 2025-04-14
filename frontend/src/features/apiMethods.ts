@@ -22,13 +22,17 @@ export interface ActionTypes {
 
 export const httpGetRequest = async (apiURL: string) => {
     try {
+        // Get user email from localStorage for authentication
+        const userEmail = localStorage.getItem('userEmail');
+        
         // 👇️ const response: Response
         const response = await fetch(apiURL, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Request-Method': 'GET'
+            'Access-Control-Request-Method': 'GET',
+            'X-User-Email': userEmail || '' // Add user email for authentication
           }
         });
     
@@ -51,6 +55,9 @@ export const httpGetRequest = async (apiURL: string) => {
 
 export const httpPostRequest = async (apiURL: string, requestBody: any) => {
     try {
+        // Get user email from localStorage for authentication
+        const userEmail = localStorage.getItem('userEmail');
+        
         // 👇️ const response: Response
         const response = await fetch(apiURL, {
           method: 'POST',
@@ -58,7 +65,8 @@ export const httpPostRequest = async (apiURL: string, requestBody: any) => {
           headers: {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Request-Method': 'POST'
+            'Access-Control-Request-Method': 'POST',
+            'X-User-Email': userEmail || '' // Add user email for authentication
           }
         });
     

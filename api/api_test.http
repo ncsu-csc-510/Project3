@@ -1,5 +1,5 @@
 ### Add New Recipe to Database (Auto-Generated ID)
-POST http://localhost:8000/recipe/add-recipe/
+POST http://localhost:8000/recipes/add-recipe/
 Content-Type: application/json
 
 {
@@ -36,11 +36,11 @@ Content-Type: application/json
 }
 
 ### Search Recipe by Name (Case & Whitespace Insensitive)
-GET http://localhost:8000/recipe/search-name/BestRecipe
+GET http://localhost:8000/recipes/search-name/BestRecipe
 Content-Type: application/json
 
 ### API Endpoint for recipe that doesnot exists 
-GET http://localhost:8000/recipe/search-name/doesnotExist
+GET http://localhost:8000/recipes/search-name/doesnotExist
 Content-Type: application/json
 
 ### Meal plan 
@@ -48,15 +48,15 @@ GET http://localhost:8000/meal-plan/
 Content-Type: application/json
 
 ### Delete a Recipe by ID
-DELETE http://localhost:8000/recipe/delete-recipe/0d204cef-365d-4edd-8071-d05f5bccdeab
+DELETE http://localhost:8000/recipes/delete-recipe/0d204cef-365d-4edd-8071-d05f5bccdeab
 Content-Type: application/json
 
 ### Verify Deletion by Trying to Get the Deleted Recipe
-GET http://localhost:8000/recipe/0d204cef-365d-4edd-8071-d05f5bccdeab
+GET http://localhost:8000/recipes/0d204cef-365d-4edd-8071-d05f5bccdeab
 Content-Type: application/json
 
 ### Chatbot Nutrition Recommendation Test
-POST http://localhost:8000/recipe/nutrition-chatbot/
+POST http://localhost:8000/recipes/nutrition-chatbot/
 Content-Type: application/json
 
 {

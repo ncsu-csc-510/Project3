@@ -16,7 +16,7 @@ this file. If not, please write to: help.cookbook@gmail.com
  * Search component remain static throughout the application
  * @author Priyanka Ambawane - dearpriyankasa@gmail.com
  */
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Autocomplete, Box, Button, Chip, Grid, TextField } from '@mui/material'
@@ -81,6 +81,7 @@ const GetIngredients = () => {
 
   const [chipData, setChipData] = useState<readonly ChipData[]>([])
   const [listData, setListData] = useState<readonly ListData[]>([])
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
 
   // accesses the state of the component from the app's store
   const getIngredientsState = useSelector(
@@ -99,16 +100,35 @@ const GetIngredients = () => {
     }
   }, [getIngredientsState.getIngredientsData])
 
-  // function to get ingredients suggestions after input of 3 chars in the search field
-  const onChangeTextField = (val: string) => {
-    if (val.length >= 3) {
-      dispatch(
-        getIngredientsInitiator(
-          'http://localhost:8000/recipe/ingredients/' + val
-        )
-      )
+  // Debounced function to get ingredients suggestions
+  const onChangeTextField = useCallback((val: string) => {
+    // Clear any existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
     }
-  }
+
+    // Only make API call after 500ms of inactivity and if input is 3+ chars
+    if (val.length >= 3) {
+      const timeout = setTimeout(() => {
+        dispatch(
+          getIngredientsInitiator(
+            'http://localhost:8000/recipes/ingredients/' + val
+          )
+        )
+      }, 500) // 500ms delay
+      
+      setSearchTimeout(timeout)
+    }
+  }, [dispatch, searchTimeout])
+
+  // Clean up the timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
+    }
+  }, [searchTimeout])
 
   // on enter or ingredient selection from suggestion list, this function stores the input in the chipData state
   const onChangeField = (val: string) => {
@@ -129,7 +149,7 @@ const GetIngredients = () => {
     if (ingredientsArray.length > 0) {
       sessionStorage.setItem('ingredients', JSON.stringify(ingredientsArray))
       dispatch(
-        getRecipeListInitiator('http://localhost:8000/recipe/search/', {
+        getRecipeListInitiator('http://localhost:8000/recipes/search/', {
           ingredients: ingredientsArray,
           page: 1,
         })

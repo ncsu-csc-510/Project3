@@ -149,7 +149,7 @@ const AddRecipe = () => {
       };
 
       const response = await axios.post(
-        `http://localhost:8000/recipe?email=${userEmail}`,
+        `http://localhost:8000/recipes?email=${userEmail}`,
         formattedRecipe
       );
       

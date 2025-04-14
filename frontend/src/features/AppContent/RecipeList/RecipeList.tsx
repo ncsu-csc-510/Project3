@@ -95,18 +95,38 @@ const RecipeList = () => {
           return
         }
 
-        const response = await axios.get(`http://localhost:8000/recipes?email=${userEmail}`)
-        setRecipes(response.data)
+        // Fetch all recipes using the recipe-list endpoint
+        const response = await axios.get(`http://localhost:8000/recipes/recipe-list`)
+        if (response.data && response.data.recipes) {
+          setRecipes(response.data.recipes)
+        } else {
+          console.error('Invalid response format:', response.data)
+          setRecipes([])
+        }
+        
+        // Also dispatch the Redux action to fetch recipes by ingredients
+        const ingredientsArray = JSON.parse(
+          sessionStorage.getItem('ingredients') || '[]'
+        )
+        if (ingredientsArray.length > 0) {
+          dispatch(
+            getRecipeListInitiator('http://localhost:8000/recipes/search/', {
+              ingredients: ingredientsArray,
+              page: 1,
+            })
+          )
+        }
       } catch (error) {
         console.error('Error fetching recipes:', error)
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           navigateTo('/login')
         }
+        setRecipes([])
       }
     }
 
     fetchRecipes()
-  }, [navigateTo])
+  }, [navigateTo, dispatch])
 
   useEffect(() => {
     let recipes = getRecipeListState.getRecipeListData['recipes']
@@ -165,7 +185,7 @@ const RecipeList = () => {
   }, [selectedCategory, selectedCookTime, recipeList])
 
   const gotoRecipe = (id: string) => {
-    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
+    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id))
     navigateTo('/recipe-details/' + id)
   }
 
@@ -177,7 +197,7 @@ const RecipeList = () => {
       sessionStorage.getItem('ingredients') || '[]'
     )
     dispatch(
-      getRecipeListInitiator('http://localhost:8000/recipe/search/', {
+      getRecipeListInitiator('http://localhost:8000/recipes/search/', {
         ingredients: ingredientsArray,
         page: value,
       })
