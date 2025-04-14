@@ -2,6 +2,9 @@ FROM node:18
 
 WORKDIR /app
 
+# Set Node options for OpenSSL compatibility
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
 COPY package.json ./
 COPY package-lock.json ./
 

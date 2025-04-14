@@ -9,7 +9,7 @@ this file. If not, please write to: help.cookbook@gmail.com
 """
 
 from fastapi.middleware.cors import CORSMiddleware
-from routes import router
+from routes import router, user_router
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI, HTTPException
 from models import ShoppingListItem
@@ -49,8 +49,16 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_db_client():
     """Initializes the database client when the application starts"""
-    app.mongodb_client = AsyncIOMotorClient(config["ATLAS_URI"], tlsCAFile=ca)
+    app.mongodb_client = AsyncIOMotorClient(
+        config["ATLAS_URI"],
+        tlsCAFile=ca,
+        ssl=True,
+        ssl_cert_reqs='CERT_NONE'  # Less secure but helps bypass SSL issues
+    )
     app.database = app.mongodb_client[config["DB_NAME"]]
+    print("Available routes:")
+    for route in app.routes:
+        print(f"{route.methods} {route.path}")
 
 
 @app.on_event("shutdown")
@@ -60,11 +68,14 @@ async def shutdown_db_client():
 
 
 # Include the router with all endpoints
-# First include the user authentication endpoints without a prefix
-app.include_router(router, tags=["users"], prefix="")
+# Use different routers for different path operations
+app.include_router(router, tags=["api"])
+app.include_router(user_router, prefix="/user", tags=["users"])
 
-# Then include the recipe endpoints with the /recipe prefix
-app.include_router(router, tags=["recipes"], prefix="/recipe")
+@app.get("/")
+async def root():
+    """Root endpoint for testing"""
+    return {"message": "API is running"}
 
 """ This api functions is for shopping list."""
 

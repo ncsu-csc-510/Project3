@@ -173,3 +173,11 @@ class NutritionQuery(BaseModel):
     gender: str # "male" or "female"
     goal: str # "lose weight", "maintain weight", or "gain weight"
     activity_level: str # "sedentary", "light", "moderate", "active", "very active"
+
+class RecipeStep(BaseModel):
+    step_number: int
+    description: str
+    duration_seconds: Optional[int] = None
+    voice_command: Optional[str] = None
+    ingredients: Optional[list[str]] = None
+    equipment: Optional[list[str]] = None

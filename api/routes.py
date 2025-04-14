@@ -37,6 +37,7 @@ config = {
     "PORT": os.getenv("PORT")
 }
 router = APIRouter()
+user_router = APIRouter()
 client = Groq(api_key=config["GROQ_API_KEY"])
 
 # Authentication middleware
@@ -412,7 +413,8 @@ async def get_nutrition_recommendations(query: NutritionQuery, request: Request)
             detail=f"An error occurred while generating recommendations: {str(e)}"
         )
 
-@router.post("/user/signup")
+# Move user endpoints to the user_router
+@user_router.post("/signup")
 async def user_signup(user: User, request: Request):
     db = request.app.database
     existing_user = await db.users.find_one({"email": user.email})
@@ -421,7 +423,7 @@ async def user_signup(user: User, request: Request):
     result = await db.users.insert_one(user.dict())
     return {"id": str(result.inserted_id), "email": user.email, "name": user.name}
 
-@router.post("/user/login")
+@user_router.post("/login")
 async def user_login(credentials: UserLogin, request: Request):
     db = request.app.database  # Ensure you're using the same DB instance as signup
     db_user = await db.users.find_one({"email": credentials.email})
@@ -429,7 +431,7 @@ async def user_login(credentials: UserLogin, request: Request):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     return {"id": str(db_user["_id"]), "name": db_user["name"], "email": db_user["email"]}
 
-@router.get("/user/profile")
+@user_router.get("/profile")
 async def get_user_profile(email: str, request: Request):
     """
     Fetches a user profile by email.
@@ -458,7 +460,7 @@ async def get_user_profile(email: str, request: Request):
     
     return user_data
 
-@router.put("/user/profile/photo")
+@user_router.put("/profile/photo")
 async def update_profile_photo(email: str, profile_photo: str, request: Request):
     """
     Updates a user's profile photo.
@@ -475,13 +477,17 @@ async def update_profile_photo(email: str, profile_photo: str, request: Request)
     
     return {"message": "Profile photo updated successfully"}
 
-@router.put("/user/profile")
-async def update_user_profile(email: str, profile_data: dict, request: Request):
+@user_router.put("/profile", response_description="Update user profile", status_code=200)
+async def update_user_profile(email: str, request: Request):
     """
     Updates a user's profile information.
-    Expects the client to supply the email and profile data as parameters.
+    Expects the client to supply the email as a query parameter and profile data in the request body.
     """
     db = request.app.database
+    
+    # Get profile data from request body
+    profile_data = await request.json()
+    
     result = await db.users.update_one(
         {"email": email},
         {"$set": profile_data}
@@ -844,3 +850,71 @@ async def delete_shopping_list_item(item_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Item not found")
 
     return {"message": f"Item with ID {item_id} deleted successfully"}
+
+@router.post("/recipe-steps/", response_description="Add a new recipe step", status_code=201)
+async def add_recipe_step(step: RecipeStep, request: Request):
+    """Adds a new recipe step to the database."""
+    try:
+        step_dict = step.dict()
+        result = request.app.database["recipe_steps"].insert_one(step_dict)
+        return {"message": "Recipe step added successfully", "id": str(result.inserted_id)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while adding the recipe step: {str(e)}"
+        )
+
+@router.get("/recipe-steps/{step_number}", response_description="Get a recipe step by number", response_model=RecipeStep)
+async def get_recipe_step(step_number: int, request: Request):
+    """Retrieves a recipe step by its step number."""
+    step = request.app.database["recipe_steps"].find_one({"step_number": step_number})
+    if step:
+        return step
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Recipe step with number {step_number} not found"
+    )
+
+@router.get("/recipe-steps/", response_description="List all recipe steps", response_model=List[RecipeStep])
+async def list_recipe_steps(request: Request):
+    """Lists all recipe steps in the database."""
+    steps = list(request.app.database["recipe_steps"].find().sort("step_number", 1))
+    return steps
+
+@router.put("/recipe-steps/{step_number}", response_description="Update a recipe step", status_code=200)
+async def update_recipe_step(step_number: int, step: RecipeStep, request: Request):
+    """Updates an existing recipe step."""
+    try:
+        step_dict = step.dict()
+        result = request.app.database["recipe_steps"].update_one(
+            {"step_number": step_number},
+            {"$set": step_dict}
+        )
+        if result.modified_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Recipe step with number {step_number} not found"
+            )
+        return {"message": "Recipe step updated successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while updating the recipe step: {str(e)}"
+        )
+
+@router.delete("/recipe-steps/{step_number}", response_description="Delete a recipe step", status_code=200)
+async def delete_recipe_step(step_number: int, request: Request):
+    """Deletes a recipe step from the database."""
+    try:
+        result = request.app.database["recipe_steps"].delete_one({"step_number": step_number})
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Recipe step with number {step_number} not found"
+            )
+        return {"message": "Recipe step deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while deleting the recipe step: {str(e)}"
+        )
