@@ -251,20 +251,30 @@ const WhatToEatPage: React.FC = () => {
     let recipeSections: string[] = [];
     
     // Try each pattern until we find matches
-    for (const pattern of recipePatterns) {
-      const matches = [...response.matchAll(pattern)];
+    for (let i = 0; i < recipePatterns.length; i++) {
+      const pattern = recipePatterns[i];
+      // Use a more compatible approach instead of spread operator with matchAll
+      const matches: RegExpExecArray[] = [];
+      let match;
+      const regex = new RegExp(pattern);
+      while ((match = regex.exec(response)) !== null) {
+        matches.push(match);
+      }
+      
       if (matches.length > 0) {
         // Extract the recipe names
         const recipeNames = matches.map(match => match[1].trim());
         
         // Split the response by recipe names
         let remainingText = response;
-        for (const name of recipeNames) {
+        for (let j = 0; j < recipeNames.length; j++) {
+          const name = recipeNames[j];
           const parts = remainingText.split(name);
           if (parts.length > 1) {
             // Find the next recipe name or end of text
             let nextRecipeIndex = -1;
-            for (const nextName of recipeNames) {
+            for (let k = 0; k < recipeNames.length; k++) {
+              const nextName = recipeNames[k];
               if (nextName !== name) {
                 const index = parts[1].indexOf(nextName);
                 if (index !== -1 && (nextRecipeIndex === -1 || index < nextRecipeIndex)) {
