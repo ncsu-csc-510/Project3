@@ -19,6 +19,7 @@ import sys
 import os
 import certifi
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, '../')
 
@@ -47,6 +48,13 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Create uploads directory if it doesn't exist
+uploads_dir = "uploads"
+if not os.path.exists(uploads_dir):
+    os.makedirs(uploads_dir)
+
+# Mount the uploads directory for serving static files
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 @app.on_event("startup")
 async def startup_db_client():
@@ -59,7 +67,10 @@ async def startup_db_client():
     app.database = app.mongodb_client[config["DB_NAME"]]
     print("Available routes:")
     for route in app.routes:
-        print(f"{route.methods} {route.path}")
+        if hasattr(route, 'methods'):
+            print(f"{route.methods} {route.path}")
+        else:
+            print(f"MOUNT {route.path}")
 
 
 @app.on_event("shutdown")

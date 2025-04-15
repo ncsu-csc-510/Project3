@@ -800,16 +800,6 @@ const WhatToEatPage: React.FC = () => {
                     }}
                     onClick={() => handleRecipeClick(recipe)}
                   >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={recipe.images && recipe.images.length > 0 ? recipe.images[0] : 'https://via.placeholder.com/300x200?text=Recipe'}
-                      alt={recipe.name}
-                      sx={{ 
-                        objectFit: 'cover',
-                        borderBottom: `2px solid ${theme.headerColor}`,
-                      }}
-                    />
                     <CardContent sx={{ flexGrow: 1, p: 2 }}>
                       <Typography 
                         gutterBottom 
@@ -938,16 +928,6 @@ const WhatToEatPage: React.FC = () => {
                     }}
                     onClick={() => handleRecipeClick(recipe)}
                   >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={recipe.images && recipe.images.length > 0 ? recipe.images[0] : 'https://via.placeholder.com/300x200?text=No+Image'}
-                      alt={recipe.name}
-                      sx={{ 
-                        objectFit: 'cover',
-                        borderBottom: `2px solid ${theme.headerColor}`,
-                      }}
-                    />
                     <CardContent sx={{ flexGrow: 1, p: 2 }}>
                       <Typography 
                         gutterBottom 
@@ -1085,19 +1065,7 @@ const WhatToEatPage: React.FC = () => {
             </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <img
-                    src={selectedRecipe.images && selectedRecipe.images.length > 0 ? selectedRecipe.images[0] : 'https://via.placeholder.com/300x200?text=No+Image'}
-                    alt={selectedRecipe.name}
-                    style={{
-                      width: '100%',
-                      height: '300px',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom>
                     Description
                   </Typography>

@@ -20,11 +20,12 @@ from bson import ObjectId
 import pymongo
 from groq import Groq
 import openai
-from fastapi import FastAPI, APIRouter, Body, Request, HTTPException, status, Depends, Query
+from fastapi import FastAPI, APIRouter, Body, Request, HTTPException, status, Depends, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr
+from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr, Field
 from dotenv import load_dotenv
+import shutil
 
 # Add parent directory to path
 sys.path.insert(0, '../')
@@ -75,46 +76,64 @@ async def get_current_user(request: Request):
     return user
 
 # Models
-class MealPlanEntry(BaseModel):
+class MealPlan(BaseModel):
     """Model for meal plan entry"""
     day: int  # 0-6 representing Monday-Sunday
     recipe: dict  # The recipe details (name, instructions, etc.)
 
+class RatingRequest(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+
 # Meal Plan Routes
 @router.post("/recipes/meal-plan/", response_description="Save a meal plan for a specific day", status_code=200)
-async def save_meal_plan(entry: MealPlanEntry, request: Request):
-    """Saves or updates a meal plan for a specific day."""
+async def save_meal_plan(meal_plan: MealPlan, request: Request = Depends(get_request)):
     try:
-        # Validate day is within range
-        if entry.day < 0 or entry.day > 6:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Day must be between 0 and 6 (Monday-Sunday)."
-            )
+        print(f"Starting meal plan save for day {meal_plan.day}")
+        print(f"Initial recipe data: {meal_plan.recipe}")
         
-        # Ensure recipe has required fields
-        if not entry.recipe or not isinstance(entry.recipe, dict):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Recipe must be a valid dictionary."
-            )
+        # Get the recipe details including images
+        recipe = await request.app.database["recipes"].find_one({"_id": meal_plan.recipe["_id"]})
+        if not recipe:
+            print(f"Recipe {meal_plan.recipe['_id']} not found")
+            raise HTTPException(status_code=404, detail="Recipe not found")
+        
+        print(f"Found recipe from DB: {recipe}")
+        print(f"Recipe images: {recipe.get('images', [])}")
+        
+        # Update the meal plan recipe with the full recipe details including images
+        meal_plan.recipe = {
+            "_id": recipe["_id"],
+            "name": recipe.get("name", ""),
+            "description": recipe.get("description", ""),
+            "category": recipe.get("category", ""),
+            "images": recipe.get("images", []),  # Include the images array
+            "rating": recipe.get("rating", 0),
+            "prepTime": recipe.get("prepTime", ""),
+            "cookTime": recipe.get("cookTime", ""),
+            "servings": recipe.get("servings", 0),
+            # Add nutritional values
+            "calories": recipe.get("calories", 0),
+            "protein": recipe.get("protein", 0),
+            "fat": recipe.get("fat", 0),
+            "sugar": recipe.get("sugar", 0),
+            "sodium": recipe.get("sodium", 0),
+            "ingredients": recipe.get("ingredients", []),
+            "ingredientQuantities": recipe.get("ingredientQuantities", []),
+            "instructions": recipe.get("instructions", [])
+        }
+        
+        print(f"Final meal plan recipe data: {meal_plan.recipe}")
+        print(f"Final images array: {meal_plan.recipe['images']}")
         
         # Save to database
-        result = await request.app.database["meal_plans"].update_one(
-            {"day": entry.day},
-            {"$set": {"recipe": entry.recipe}},
-            upsert=True
-        )
+        result = await request.app.database["meal_plans"].insert_one(meal_plan.dict())
+        print(f"Meal plan saved with ID: {result.inserted_id}")
         
-        return {"message": "Meal plan saved successfully."}
-    except HTTPException:
-        raise
+        return {"message": "Meal plan saved successfully", "meal_plan": meal_plan.dict()}
+        
     except Exception as e:
         print(f"Error saving meal plan: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while saving the meal plan: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/recipes/meal-plan/", response_description="Get the entire meal plan for the week", status_code=200)
 async def get_meal_plan(request: Request):
@@ -123,7 +142,30 @@ async def get_meal_plan(request: Request):
         cursor = request.app.database["meal_plans"].find({})
         meal_plan = []
         async for entry in cursor:
+            # Convert ObjectId to string
             entry["_id"] = str(entry["_id"])
+            
+            # Ensure recipe data is complete
+            if "recipe" in entry:
+                recipe = entry["recipe"]
+                print(f"Processing recipe: {recipe.get('name')}")
+                print(f"Recipe images before update: {recipe.get('images', [])}")
+                
+                # Add any missing fields with default values
+                recipe.update({
+                    "calories": recipe.get("calories", 0),
+                    "protein": recipe.get("protein", 0),
+                    "fat": recipe.get("fat", 0),
+                    "sugar": recipe.get("sugar", 0),
+                    "sodium": recipe.get("sodium", 0),
+                    "images": recipe.get("images", []),
+                    "ingredients": recipe.get("ingredients", []),
+                    "ingredientQuantities": recipe.get("ingredientQuantities", []),
+                    "instructions": recipe.get("instructions", [])
+                })
+                
+                print(f"Recipe images after update: {recipe.get('images', [])}")
+            
             meal_plan.append(entry)
 
         complete_plan = [None for _ in range(7)]
@@ -889,3 +931,108 @@ async def generate_meal_plan(request: Request, preferences: MealPlanGenerationRe
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while generating the meal plan: {str(e)}"
         )
+
+@router.post("/recipes/{recipe_id}/upload-image")
+async def upload_recipe_image(recipe_id: str, file: UploadFile = File(...), request: Request = Depends(get_request)):
+    """Upload an image for a specific recipe"""
+    try:
+        print(f"Starting image upload for recipe {recipe_id}")
+        
+        # Validate recipe exists
+        recipe = await request.app.database["recipes"].find_one({"_id": recipe_id})
+        if not recipe:
+            print(f"Recipe {recipe_id} not found")
+            raise HTTPException(status_code=404, detail="Recipe not found")
+        print(f"Found recipe: {recipe}")
+
+        # Create uploads directory if it doesn't exist
+        os.makedirs("uploads", exist_ok=True)
+        print("Created uploads directory")
+
+        # Generate unique filename
+        file_extension = file.filename.split(".")[-1]
+        filename = f"{recipe_id}.{file_extension}"
+        file_path = os.path.join("uploads", filename)
+        print(f"Generated filename: {filename}")
+
+        # Save the file
+        contents = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(contents)
+        print(f"Saved file to {file_path}")
+
+        # Update recipe with image path
+        image_url = f"/uploads/{filename}"
+        
+        # Get existing images array or create new one
+        images = recipe.get("images", [])
+        print(f"Current images array: {images}")
+        
+        # Remove placeholder image if it exists
+        images = [img for img in images if not img.startswith('https://via.placeholder.com')]
+        
+        # Add new image URL to the array if it's not already there
+        if image_url not in images:
+            images.append(image_url)
+            print(f"Updated images array: {images}")
+            
+            # Update the recipe in the database
+            result = await request.app.database["recipes"].update_one(
+                {"_id": recipe_id},
+                {"$set": {"images": images}}
+            )
+            print(f"Database update result: {result.modified_count} documents modified")
+
+            # Verify the update
+            updated_recipe = await request.app.database["recipes"].find_one({"_id": recipe_id})
+            print(f"Updated recipe: {updated_recipe}")
+
+            return {"message": "Image uploaded successfully", "image_url": image_url}
+        else:
+            return {"message": "Image already exists", "image_url": image_url}
+    except Exception as e:
+        print(f"Error uploading image: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/recipes/{recipe_id}/rate")
+async def rate_recipe(recipe_id: str, rating_request: RatingRequest, request: Request = Depends(get_request)):
+    try:
+        print(f"Starting rating update for recipe {recipe_id} with rating {rating_request.rating}")
+        
+        # Validate recipe exists
+        recipe = await request.app.database["recipes"].find_one({"_id": recipe_id})
+        if not recipe:
+            print(f"Recipe {recipe_id} not found")
+            raise HTTPException(status_code=404, detail="Recipe not found")
+        
+        print(f"Found recipe: {recipe['name']}")
+        
+        # Get current rating and number of ratings, defaulting to 0 if not present
+        current_rating = float(recipe.get('rating', 0) or 0)
+        num_ratings = int(recipe.get('num_ratings', 0) or 0)
+        
+        # Calculate new average rating
+        new_num_ratings = num_ratings + 1
+        new_rating = ((current_rating * num_ratings) + rating_request.rating) / new_num_ratings
+        
+        # Update recipe with new rating
+        update_result = await request.app.database["recipes"].update_one(
+            {"_id": recipe_id},
+            {
+                "$set": {
+                    "rating": round(new_rating, 2),
+                    "num_ratings": new_num_ratings
+                }
+            }
+        )
+        
+        if update_result.modified_count == 0:
+            print("No changes made to recipe")
+            raise HTTPException(status_code=500, detail="Failed to update recipe rating")
+        
+        print(f"Successfully updated rating for recipe {recipe_id}")
+        return {"success": True, "new_rating": round(new_rating, 2)}
+        
+    except Exception as e:
+        print(f"Error updating rating: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

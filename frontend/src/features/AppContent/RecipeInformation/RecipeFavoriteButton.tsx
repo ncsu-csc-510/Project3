@@ -45,7 +45,19 @@ const RecipeFavoriteButton: React.FC<Props> = ({ recipe }) => {
         alert("Recipe removed from favorites!");
       } else {
         // Add to favorites
-        updatedFavorites = [...favorites, recipe];
+        const recipeToSave = {
+          ...recipe,
+          _id: recipe.id, // Ensure we have the correct ID field
+          images: recipe.images.map(img => {
+            // If the image URL is already a full URL, keep it as is
+            if (img.startsWith('http')) {
+              return img;
+            }
+            // If it's a relative path, ensure it has the correct format
+            return img.startsWith('/') ? img : `/${img}`;
+          })
+        };
+        updatedFavorites = [...favorites, recipeToSave];
         alert("Recipe added to favorites!");
       }
   

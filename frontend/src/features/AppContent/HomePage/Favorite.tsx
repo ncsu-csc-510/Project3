@@ -124,8 +124,10 @@ const Favorites: React.FC = () => {
                 <CardMedia
                   component="img"
                   height="200"
-                  image={recipe?.images?.length > 0 && recipe?.images[0]?.trim() !== '' 
-                    ? recipe.images[0].split('"').join('') 
+                  image={recipe?.images?.length > 0 
+                    ? recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))?.startsWith('http')
+                      ? recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))
+                      : `http://localhost:8000${recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))}`
                     : noImage}
                   alt={recipe.name}
                   sx={{ 

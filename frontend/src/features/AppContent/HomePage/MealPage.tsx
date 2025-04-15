@@ -504,33 +504,9 @@ const MealPage = () => {
                         onClick={() => handleRecipeClick(mealPlan[index])}
                         sx={{ 
                           cursor: 'pointer',
-                          '&:hover': {
-                            '& .recipe-image': {
-                              transform: 'scale(1.05)',
-                              transition: 'transform 0.3s ease-in-out',
-                            },
-                          },
                         }}
                       >
-                        <Grid item xs={12} sm={4}>
-                          <CardMedia
-                            component="img"
-                            height="140"
-                            image={
-                              mealPlan[index]?.images?.length > 0
-                                ? mealPlan[index].images[0]
-                                : noImage
-                            }
-                            alt={mealPlan[index].name}
-                            className="recipe-image"
-                            sx={{
-                              borderRadius: 1,
-                              objectFit: 'cover',
-                              transition: 'transform 0.3s ease-in-out',
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={8}>
+                        <Grid item xs={12}>
                           <Typography 
                             variant="h6" 
                             gutterBottom

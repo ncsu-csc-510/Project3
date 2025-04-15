@@ -236,21 +236,6 @@ const DragDropMealPlan = () => {
                     },
                   }}
                 >
-                  <CardMedia
-                    component="img"
-                    height="120"
-                    image={
-                      recipe?.images?.length > 0
-                        ? recipe.images[0]
-                        : noImage
-                    }
-                    alt={recipe.name}
-                    sx={{
-                      borderTopLeftRadius: 8,
-                      borderTopRightRadius: 8,
-                      objectFit: 'cover',
-                    }}
-                  />
                   <CardContent>
                     <Typography
                       variant="subtitle1"

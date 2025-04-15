@@ -21,7 +21,7 @@ import themes from '../Themes/themes'
  */
 
 function Navbar() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const userEmail = localStorage.getItem('userEmail')
   const userName = localStorage.getItem('userName')
@@ -30,11 +30,6 @@ function Navbar() {
     localStorage.removeItem('userEmail')
     localStorage.removeItem('userName')
     navigate('/login')
-  }
-
-  // Function to handle theme change
-  const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    toggleTheme(event.target.value)
   }
 
   return (
@@ -62,40 +57,6 @@ function Navbar() {
             </a>
           </div>
           <div className="navbar-right">
-            <div className="theme-selector">
-              <label htmlFor="theme-dropdown" style={{ color: theme.color }}>
-                Select Theme:
-              </label>
-              <select
-                id="theme-dropdown"
-                onChange={handleThemeChange}
-                value={Object.keys(themes).find(
-                  (themeName) =>
-                    themes[themeName as keyof typeof themes].background ===
-                    theme.background
-                )}
-                style={{
-                  backgroundColor: theme.background,
-                  color: theme.color,
-                  cursor: 'pointer',
-                  border: `1px solid ${theme.color}`,
-                }}
-              >
-                {Object.keys(themes).map((themeName) => (
-                  <option
-                    key={themeName}
-                    value={themeName}
-                    style={{
-                      backgroundColor:
-                        themes[themeName as keyof typeof themes].background,
-                      color: themes[themeName as keyof typeof themes].color,
-                    }}
-                  >
-                    {themeName}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="user-section">
               <span className="user-name" style={{ color: theme.color }}>
                 Welcome, {userName}
@@ -111,7 +72,7 @@ function Navbar() {
           </div>
         </>
       ) : (
-        <div className="navbar-left">
+        <div className="navbar-right">
           <a href="/login" className="navbar-item" style={{ color: theme.color }}>
             Login
           </a>

@@ -292,7 +292,11 @@ const HomePage = () => {
                     <CardMedia
                       component="img"
                       height="240"
-                      image={recipe.images && recipe.images.length > 0 ? recipe.images[0] : 'https://via.placeholder.com/300x200?text=No+Image'}
+                      image={recipe.images && recipe.images.length > 0 
+                        ? recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))?.startsWith('http')
+                          ? recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))
+                          : `http://localhost:8000${recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))}`
+                        : 'https://via.placeholder.com/300x200?text=No+Image'}
                       alt={recipe.name}
                       sx={{ 
                         objectFit: 'cover',
@@ -359,61 +363,6 @@ const HomePage = () => {
           )}
         </Container>
       </Box>
-
-      {/* Recipe Gallery Section */}
-      <Container maxWidth="lg" sx={{ py: 10 }}>
-        <Typography
-          variant="h2"
-          component="h2"
-          gutterBottom
-          sx={{
-            textAlign: 'center',
-            mb: 6,
-            fontWeight: 800,
-            fontSize: { xs: '2rem', md: '2.5rem' },
-          }}
-        >
-          Recipe Gallery
-        </Typography>
-        <Grid container spacing={3}>
-          {[seventh, eighth, nineth, tenth].map((image, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  paddingTop: '100%',
-                  overflow: 'hidden',
-                  borderRadius: 3,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.02)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                    '& img': {
-                      transform: 'scale(1.1)',
-                    },
-                  },
-                }}
-              >
-                <Box
-                  component="img"
-                  src={image}
-                  alt={`Recipe ${index + 1}`}
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.5s ease',
-                  }}
-                />
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
     </Box>
   );
 };

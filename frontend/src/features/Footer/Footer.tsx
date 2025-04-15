@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Footer.css';
 import { useTheme } from '../Themes/themeContext';
+import themes from '../Themes/themes';
 
 /**
  * File name: Footer.tsx
@@ -11,8 +12,12 @@ import { useTheme } from '../Themes/themeContext';
  */
 
 const Footer: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, themeName, toggleTheme } = useTheme();
   const currentYear = new Date().getFullYear();
+
+  const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    toggleTheme(event.target.value);
+  };
 
   return (
     <footer className="footer" style={{ backgroundColor: theme.background, color: theme.color }}>
@@ -57,6 +62,37 @@ const Footer: React.FC = () => {
       </div>
 
       <div className="footer-bottom">
+        <div className="theme-selector">
+          <label htmlFor="theme-dropdown" style={{ color: theme.color, marginRight: '10px' }}>
+            Select Theme:
+          </label>
+          <select
+            id="theme-dropdown"
+            onChange={handleThemeChange}
+            value={themeName}
+            style={{
+              backgroundColor: theme.background,
+              color: theme.color,
+              cursor: 'pointer',
+              border: `1px solid ${theme.color}`,
+              padding: '5px 10px',
+              borderRadius: '4px',
+            }}
+          >
+            {Object.keys(themes).map((themeName) => (
+              <option
+                key={themeName}
+                value={themeName}
+                style={{
+                  backgroundColor: themes[themeName as keyof typeof themes].background,
+                  color: themes[themeName as keyof typeof themes].color,
+                }}
+              >
+                {themeName}
+              </option>
+            ))}
+          </select>
+        </div>
         <p>&copy; {currentYear} Cook Book. All Rights Reserved.</p>
       </div>
     </footer>
