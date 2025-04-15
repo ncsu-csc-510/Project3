@@ -40,7 +40,7 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        coverage run -m pytest ./tests/
+        coverage run -m pytest ./tests_akulka24/
         coverage report -m
 
     - name: Upload coverage report
