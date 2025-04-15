@@ -238,46 +238,48 @@ To set up the front end React app, do:
 
 ---
 
-### 🖼️ Personalized Themes   
+### 🖼️ Generating Personalized Meal Plan  
 
-![Personalized Themes Screenshot](https://github.com/user-attachments/assets/28d6a098-5512-48b0-b5ba-adc998e97313)
-
----
-
-### 📝 Printable Meal Plans  
-
-![Printable Meal Plans Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/mealplan.png?raw=true)
+![Personalized Themes Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/2.png)
 
 ---
 
-### 🛒 PDF Shopping List Export  
-Easily generate shopping lists from selected recipes and export them as PDFs for offline access and convenience. Save time and never forget an ingredient while shopping!  
+### 📝 Meal Plan generated in a Calendar View
 
-![Shopping List Export Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/shopping.png?raw=true)  
-
----
-
-### 🍝 Advanced Recipe Filters  
-Looking for something quick? Or perhaps you want to try a specific cuisine? Use advanced filters to narrow down recipes by:  
-- Cuisine type  
-- Cooking time  
-- Dietary preferences  
-
-![Recipe Filters Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/Category_filter.png?raw=true)  
+![Printable Meal Plans Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/3.png)
 
 ---
 
-### 🤝 Social Sharing & Quick Access  
-Share your favorite recipes instantly via Discord, Slack, or other social media platforms. Collaboration in the kitchen has never been easier!  
+### 🛒 Meal Plan Creation using Drag & Drop
 
-![Social Sharing Screenshot](https://github.com/user-attachments/assets/beb3eb82-e251-4f4e-90e7-d0d0b924aa57)
+![Shopping List Export Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/4.png)  
 
-![FAQ Screenshot](https://github.com/user-attachments/assets/df62d5e3-fed0-4946-9b15-b6609aa46698)
+---
+
+### 🍝 Automatic Export of Ingredients to a Shopping List
+
+![Recipe Filters Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/5.png)  
+
+---
+
+### 🤝 User History & Activity based AI created recipes  
+
+![FAQ Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/6.png)
 
 
 ---
 
+### New & Improved Recipe Viewer
 
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/7.png)
+
+---
+
+### 🖼️ Interactive Voice Activated Cooking Mode
+
+![Personalized Themes Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/8.png)
+
+---
 
 ## Old Functions
 - This is the CookBook HomePage that should automatically open in a browser after executing the command: 'npm start'
