@@ -281,7 +281,7 @@ To set up the front end React app, do:
 
 ---
 
-## Old Functions
+<!--## Old Functions
 - This is the CookBook HomePage that should automatically open in a browser after executing the command: 'npm start'
   <br><br>
 
@@ -372,13 +372,7 @@ Following extensions have to be added to you VS Code editor:
 ```-->
 
 # Code Coverage for 6.0
-![code coverage image](images/image-16.png)
-
-# Code Coverage
-[Codecov](https://app.codecov.io/gh/yzhu27/CookBook)
-![civ](assets/codecov.png)
-
-In case of any queries and for additional help, please email us at: help.cookbook@gmail.com
+![code coverage image](https://github.com/ncsu-csc-510/Project3/blob/main/media/9.png)
 
 # Meet the Team
 
