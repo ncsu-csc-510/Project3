@@ -145,6 +145,24 @@ jobs:
                             "prepTime": "10 minutes",
                             "servings": 2,
                             "public": False
+                        },
+                        {
+                            "_id": "recipe3",
+                            "name": "Pasta with Tomato",
+                            "category": "Italian",
+                            "ingredients": ["pasta", "tomato", "basil"],
+                            "instructions": ["Step 1", "Step 2", "Step 3"],
+                            "cookTime": "20 minutes",
+                            "prepTime": "10 minutes",
+                            "totalTime": "30 minutes",
+                            "servings": 2,
+                            "userId": "user_id_123",
+                            "public": True,
+                            "calories": "350",
+                            "fat": "10",
+                            "saturatedFat": "2",
+                            "sugar": "5",
+                            "protein": "12"
                         }
                     ]
                 elif name == "meal-plans":
@@ -162,9 +180,16 @@ jobs:
                             "_id": "list1",
                             "userId": "user_id_123",
                             "items": [
-                                {"_id": "item1", "name": "Test Item", "checked": False}
+                                {"_id": "item1", "name": "Test Item", "checked": False, "quantity": 1, "unit": "item"}
                             ]
                         }
+                    ]
+                elif name == "ingredients":
+                    return [
+                        {"_id": "ing1", "name": "tomato"},
+                        {"_id": "ing2", "name": "pasta"},
+                        {"_id": "ing3", "name": "basil"},
+                        {"_id": "ing4", "name": "olive oil"}
                     ]
                 return []
 
@@ -223,6 +248,48 @@ jobs:
                                     if not all(v in item[key] for v in value["$all"]):
                                         match = False
                                         break
+                                elif "$regex" in value:
+                                    import re
+                                    pattern = re.compile(value["$regex"], re.IGNORECASE if "$options" in value and "i" in value["$options"] else 0)
+                                    if not pattern.search(item[key]):
+                                        match = False
+                                        break
+                                elif "$in" in value:
+                                    if item[key] not in value["$in"]:
+                                        match = False
+                                        break
+                                elif "$lt" in value:
+                                    try:
+                                        if float(item[key]) >= float(value["$lt"]):
+                                            match = False
+                                            break
+                                    except (ValueError, TypeError):
+                                        match = False
+                                        break
+                                elif "$lte" in value:
+                                    try:
+                                        if float(item[key]) > float(value["$lte"]):
+                                            match = False
+                                            break
+                                    except (ValueError, TypeError):
+                                        match = False
+                                        break
+                                elif "$gt" in value:
+                                    try:
+                                        if float(item[key]) <= float(value["$gt"]):
+                                            match = False
+                                            break
+                                    except (ValueError, TypeError):
+                                        match = False
+                                        break
+                                elif "$gte" in value:
+                                    try:
+                                        if float(item[key]) < float(value["$gte"]):
+                                            match = False
+                                            break
+                                    except (ValueError, TypeError):
+                                        match = False
+                                        break
                                 # Add other operators as needed
                             elif item[key] != value:
                                 match = False
@@ -244,6 +311,22 @@ jobs:
                         if "public" not in r:
                             r["public"] = True
                 
+                # Apply sort if specified
+                if "sort" in kwargs:
+                    sort_field, sort_order = list(kwargs["sort"].items())[0]
+                    reverse = sort_order == -1
+                    results.sort(key=lambda x: x.get(sort_field, ""), reverse=reverse)
+                
+                # Apply skip and limit if specified
+                skip = kwargs.get("skip", 0)
+                limit = kwargs.get("limit", len(results))
+                
+                if skip > 0:
+                    results = results[skip:]
+                
+                if limit < len(results):
+                    results = results[:limit]
+                
                 return MockCursor(results)
             
             async def insert_one(self, document, *args, **kwargs):
@@ -259,6 +342,19 @@ jobs:
                     from fastapi import HTTPException
                     raise HTTPException(status_code=400, detail="User already exists")
                 
+                return result
+            
+            async def insert_many(self, documents, *args, **kwargs):
+                inserted_ids = []
+                for doc in documents:
+                    doc_copy = doc.copy()
+                    if "_id" not in doc_copy:
+                        doc_copy["_id"] = str(uuid.uuid4())
+                    self._data.append(doc_copy)
+                    inserted_ids.append(doc_copy["_id"])
+                
+                result = MagicMock()
+                result.inserted_ids = inserted_ids
                 return result
             
             async def count_documents(self, query=None, *args, **kwargs):
@@ -316,8 +412,79 @@ jobs:
                 return result
                 
             def aggregate(self, pipeline, *args, **kwargs):
-                # Simple mock for aggregate - just return empty results for now
-                return MockCursor([])
+                # Basic implementation of MongoDB aggregation pipeline
+                results = self._data.copy()
+                
+                for stage in pipeline:
+                    # Handle $match stage
+                    if "$match" in stage:
+                        match_criteria = stage["$match"]
+                        temp_results = []
+                        for item in results:
+                            match = True
+                            for key, value in match_criteria.items():
+                                if key not in item:
+                                    match = False
+                                    break
+                                if isinstance(value, dict):
+                                    # Support for operators in match
+                                    if "$in" in value and item[key] not in value["$in"]:
+                                        match = False
+                                        break
+                                    # Add more operator support as needed
+                                elif item[key] != value:
+                                    match = False
+                                    break
+                            if match:
+                                temp_results.append(item)
+                        results = temp_results
+                    
+                    # Handle $project stage
+                    elif "$project" in stage:
+                        projection = stage["$project"]
+                        temp_results = []
+                        for item in results:
+                            new_item = {}
+                            for key, include in projection.items():
+                                if include == 1 and key in item:
+                                    new_item[key] = item[key]
+                            if new_item:  # Only add if we have fields
+                                temp_results.append(new_item)
+                        results = temp_results
+                    
+                    # Handle $group stage - simplified implementation
+                    elif "$group" in stage:
+                        group_spec = stage["$group"]
+                        id_field = group_spec.get("_id")
+                        
+                        # Special case for ingredient aggregation
+                        if self.name == "recipes" and isinstance(id_field, str) and id_field == "$ingredients":
+                            # Return a list of all unique ingredients
+                            all_ingredients = set()
+                            for recipe in results:
+                                if "ingredients" in recipe and isinstance(recipe["ingredients"], list):
+                                    all_ingredients.update(recipe["ingredients"])
+                            
+                            results = [{"_id": ing} for ing in all_ingredients]
+                    
+                    # Handle $limit stage
+                    elif "$limit" in stage:
+                        limit = stage["$limit"]
+                        results = results[:limit]
+                    
+                    # Handle $skip stage
+                    elif "$skip" in stage:
+                        skip = stage["$skip"]
+                        results = results[skip:]
+                    
+                    # Handle $sort stage
+                    elif "$sort" in stage:
+                        sort_criteria = stage["$sort"]
+                        for field, direction in sort_criteria.items():
+                            reverse = direction == -1
+                            results.sort(key=lambda x: x.get(field, ""), reverse=reverse)
+                
+                return MockCursor(results)
 
         class MockDatabase:
             def __init__(self, *args, **kwargs):
@@ -420,7 +587,7 @@ jobs:
             mod = real_import(name, globals, locals, fromlist, level)
             
             # If we're importing test files, patch their helper functions
-            if name.startswith('tests_akulka24') or name.startswith('tests_avenugo3'):
+            if name.startswith('tests_akulka24') or name.startswith('tests_avenugo3') or name.startswith('tests_akakadi'):
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
                     if callable(attr) and attr_name == 'create_recipe_mock':
@@ -487,7 +654,7 @@ jobs:
             
         # Step 3: Add support for patching test files directly
         for module_name in list(sys.modules.keys()):
-            if module_name.startswith('tests_akulka24') or module_name.startswith('tests_avenugo3'):
+            if module_name.startswith('tests_akulka24') or module_name.startswith('tests_avenugo3') or module_name.startswith('tests_akakadi'):
                 mod = sys.modules[module_name]
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
@@ -545,7 +712,7 @@ jobs:
             unittest.mock.patch = patched_patch
             
             # Support for tests in multiple directories
-            for test_dir in ['tests_akulka24', 'tests_avenugo3']:
+            for test_dir in ['tests_akulka24', 'tests_avenugo3', 'tests_akakadi']:
                 if os.path.exists(test_dir):
                     sys.path.insert(0, os.path.abspath(test_dir))
             
@@ -562,6 +729,9 @@ jobs:
     - name: Show test directory structure for tests_avenugo3
       run: find ./tests_avenugo3 -type f | sort
 
+    - name: Show test directory structure for tests_akakadi
+      run: find ./tests_akakadi -type f | sort
+
     - name: Run tests_akulka24 with patched MongoDB
       run: |
         PYTHONPATH=$PWD pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
@@ -570,10 +740,14 @@ jobs:
       run: |
         PYTHONPATH=$PWD pytest ./tests_avenugo3/ -v --showlocals --no-header --timeout=60
 
+    - name: Run tests_akakadi with patched MongoDB
+      run: |
+        PYTHONPATH=$PWD pytest ./tests_akakadi/ -v --showlocals --no-header --timeout=60
+
     - name: Run coverage for all test folders
       if: always()  # Run even if tests fail
       run: |
-        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/
+        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/ ./tests_akakadi/
         coverage report -m
 
     - name: Upload coverage report
