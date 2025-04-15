@@ -335,5 +335,79 @@ def test_post_multiple_ingredients_empty_list(setup_db):
     assert response.status_code == 200
     assert response.json() == {"recipes": [], "page": 1, "count": 0}
 
+def test_search_recipes_with_duplicate_ingredients_in_recipe(setup_db):
+    """Recipes that list the same ingredient more than once should still match normally."""
+    mocked_recipe = full_recipe_mock(ObjectId(), "Repeat Sugar Cake", ["sugar", "flour", "sugar"])
+
+    cursor_mock = MagicMock()
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter([mocked_recipe])
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search/sugar")
+
+    expected = [{**mocked_recipe, "_id": str(mocked_recipe["_id"])}]
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+def test_search_recipes_with_special_characters(setup_db):
+    """Ensure special characters in ingredient names do not break search."""
+    mocked_recipe = full_recipe_mock(ObjectId(), "Spicy Chili", ["jalapeño", "beef", "tomato"])
+
+    cursor_mock = MagicMock()
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter([mocked_recipe])
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search/jalapeño")
+
+    expected = [{**mocked_recipe, "_id": str(mocked_recipe["_id"])}]
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+def test_search_recipes_large_number_of_ingredients(setup_db):
+    """Test payload with many ingredients to verify pagination and matching work well."""
+    many_ingredients = [f"ingredient{i}" for i in range(1, 50)]  # 49 ingredients
+
+    mocked_recipes = [
+        full_recipe_mock(ObjectId(), "Everything Stew", many_ingredients[:10])
+    ]
+
+    cursor_mock = MagicMock()
+    cursor_mock.sort.return_value = cursor_mock
+    cursor_mock.skip.return_value = cursor_mock
+    cursor_mock.limit.return_value = cursor_mock
+    cursor_mock.__iter__.return_value = iter(mocked_recipes)
+    setup_db["recipes"].find.return_value = cursor_mock
+    setup_db["recipes"].count_documents.return_value = 1
+
+    client = TestClient(app)
+    payload = {"ingredients": many_ingredients, "page": 1}
+    response = client.post("/recipe/search/", json=payload)
+
+    expected = {
+        "recipes": [{**mocked_recipes[0], "_id": str(mocked_recipes[0]["_id"])}],
+        "page": 1,
+        "count": 1
+    }
+
+    assert response.status_code == 200
+    assert response.json() == expected
+
+
+def test_search_recipes_empty_result_for_uncommon_ingredient(setup_db):
+    """Uncommon or fake ingredient should return an empty list."""
+    setup_db["recipes"].find.return_value.__iter__.return_value = iter([])
+
+    client = TestClient(app)
+    response = client.get("/recipe/search/unobtanium")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
     
     
