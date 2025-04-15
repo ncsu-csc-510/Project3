@@ -20,6 +20,7 @@
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+
 <a href="https://groq.com" target="_blank" rel="noopener noreferrer">
   <img
     src="https://groq.com/wp-content/uploads/2024/03/PBG-mark1-color.svg"
