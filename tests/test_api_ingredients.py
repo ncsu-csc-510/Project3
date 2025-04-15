@@ -92,3 +92,56 @@ def test_get_search2_case_insensitive_ingredient(setup_db):
     expected = [mocked_recipe]
     assert response.status_code == 200
     assert response.json() == expected
+
+
+def test_get_search2_invalid_calorie_input(setup_db):
+    """ Handle invalid calorie inputs (non-integer values). """
+    client = TestClient(app)
+    response = client.get("/recipe/search2/chocolate,low,high")
+    assert response.status_code == 422  # FastAPI should catch the path type error
+
+
+def test_get_search2_duplicate_ingredient_results(setup_db):
+    """ Recipes with duplicate ingredients should be returned once. """
+    recipe = full_recipe_mock(ObjectId(), "Duplicate Ingredient Cake", "350", "12", "18", "10", ["sugar", "sugar"])
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([recipe])
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search2/sugar,300,400")
+    assert response.status_code == 200
+    assert response.json() == [recipe]
+
+def test_get_search2_multiple_recipes_same_calories(setup_db):
+    """ Test sorting when multiple recipes have the same calorie value. """
+    recipe1 = full_recipe_mock(ObjectId(), "Recipe A", "300", "10", "20", "10", ["flour", "sugar"])
+    recipe2 = full_recipe_mock(ObjectId(), "Recipe B", "300", "12", "18", "12", ["flour", "butter"])
+    
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([recipe1, recipe2])
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search2/flour,250,350")
+    
+    assert response.status_code == 200
+    assert response.json() == [recipe2, recipe1] or response.json() == [recipe1, recipe2]
+
+
+def test_get_search2_recipe_with_extra_ingredient(setup_db):
+    """ Recipe contains the target ingredient among others. Should still match. """
+    recipe = full_recipe_mock(ObjectId(), "Rich Cake", "320", "15", "25", "10", ["flour", "eggs", "sugar", "cream"])
+    
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([recipe])
+    setup_db["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/recipe/search2/eggs,300,350")
+    
+    assert response.status_code == 200
+    assert response.json() == [recipe]
+
+
+
