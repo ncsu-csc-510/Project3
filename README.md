@@ -29,6 +29,8 @@
   />
 </a>
 
+<p align="center"><img width="700" src="https://github.com/ncsu-csc-510/Project3/blob/main/media/animation.gif"></p>
+
 <!--[![Join the Discord Server](https://img.shields.io/badge/Join%20the%20Discord%20Server-7289DA?style=flat&logo=discord&logoColor=white)](https://discord.gg/jqCNWqET) -->
 
 # 🍳 What is CookBook?  
