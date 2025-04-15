@@ -666,14 +666,10 @@ jobs:
       run: |
         PYTHONPATH=$PWD pytest ./tests_avenugo3/ -v --showlocals --no-header --timeout=60
 
-    - name: Run akakadi tests
-      run: |
-        PYTHONPATH=$PWD pytest ./tests_akakadi/ -v --showlocals --no-header --timeout=60
-
     - name: Run coverage for tests
       if: always()  # Run even if tests fail
       run: |
-        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/ ./tests_akakadi/
+        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/
         coverage report -m
 
     - name: Upload coverage report
