@@ -152,8 +152,14 @@ jobs:
                         {
                             "_id": "mealplan1",
                             "userId": "user_id_123",
-                            "day": "Monday",
-                            "recipes": ["recipe1", "recipe2"]
+                            "day": 0,
+                            "recipe": {"name": "Pasta", "calories": "500"}
+                        },
+                        {
+                            "_id": "mealplan2",
+                            "userId": "user_id_123",
+                            "day": 1,
+                            "recipe": {"name": "Salad", "calories": "300"}
                         }
                     ]
                 elif name == "shopping-list":
@@ -288,8 +294,27 @@ jobs:
                                 self._data[i][key] = value
                         result = MagicMock()
                         result.modified_count = 1
+                        result.matched_count = 1
+                        result.upserted_id = None
                         return result
                         
+                # Handle upsert=True case for inserting if not exists
+                if kwargs.get('upsert', False):
+                    new_item = {}
+                    for key, value in query.items():
+                        new_item[key] = value
+                    if "$set" in update:
+                        for key, value in update["$set"].items():
+                            new_item[key] = value
+                    if "_id" not in new_item:
+                        new_item["_id"] = str(uuid.uuid4())
+                    self._data.append(new_item)
+                    result = MagicMock()
+                    result.modified_count = 0
+                    result.matched_count = 0
+                    result.upserted_id = new_item["_id"]
+                    return result
+                
                 # Special case for user profile update tests
                 if self.name == "users" and query.get("email") == "nonexistent@example.com":
                     from fastapi import HTTPException
@@ -297,6 +322,8 @@ jobs:
                         
                 result = MagicMock()
                 result.modified_count = 0
+                result.matched_count = 0
+                result.upserted_id = None
                 return result
             
             async def delete_one(self, query, *args, **kwargs):
@@ -316,8 +343,50 @@ jobs:
                 return result
                 
             def aggregate(self, pipeline, *args, **kwargs):
-                # Simple mock for aggregate - just return empty results for now
-                return MockCursor([])
+                # Simple mock for aggregate - start with all data
+                results = self._data.copy()
+                
+                # Process the pipeline stages
+                for stage in pipeline:
+                    # Handle $match stage
+                    if "$match" in stage:
+                        match_criteria = stage["$match"]
+                        temp_results = []
+                        for item in results:
+                            match = True
+                            for key, value in match_criteria.items():
+                                if key not in item:
+                                    match = False
+                                    break
+                                if isinstance(value, dict):
+                                    # Handle MongoDB operators
+                                    if "$in" in value:
+                                        if item[key] not in value["$in"]:
+                                            match = False
+                                            break
+                                    # Add more operators as needed
+                                elif item[key] != value:
+                                    match = False
+                                    break
+                            if match:
+                                temp_results.append(item)
+                        results = temp_results
+                    
+                    # Handle $project stage
+                    if "$project" in stage:
+                        projection = stage["$project"]
+                        temp_results = []
+                        for item in results:
+                            new_item = {}
+                            for key, include in projection.items():
+                                if include == 1 and key in item:
+                                    new_item[key] = item[key]
+                            temp_results.append(new_item)
+                        results = temp_results
+                    
+                    # Add more pipeline stage handlers as needed
+                
+                return MockCursor(results)
 
         class MockDatabase:
             def __init__(self, *args, **kwargs):
@@ -420,7 +489,7 @@ jobs:
             mod = real_import(name, globals, locals, fromlist, level)
             
             # If we're importing test files, patch their helper functions
-            if name.startswith('tests_akulka24') or name.startswith('tests_avenugo3'):
+            if name.startswith('tests_akulka24') or name.startswith('tests_avenugo3') or name.startswith('tests_akakadi'):
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
                     if callable(attr) and attr_name == 'create_recipe_mock':
@@ -487,7 +556,7 @@ jobs:
             
         # Step 3: Add support for patching test files directly
         for module_name in list(sys.modules.keys()):
-            if module_name.startswith('tests_akulka24') or module_name.startswith('tests_avenugo3'):
+            if module_name.startswith('tests_akulka24') or module_name.startswith('tests_avenugo3') or module_name.startswith('tests_akakadi'):
                 mod = sys.modules[module_name]
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
@@ -545,7 +614,7 @@ jobs:
             unittest.mock.patch = patched_patch
             
             # Support for tests in multiple directories
-            for test_dir in ['tests_akulka24', 'tests_avenugo3']:
+            for test_dir in ['tests_akulka24', 'tests_avenugo3', 'tests_akakadi']:
                 if os.path.exists(test_dir):
                     sys.path.insert(0, os.path.abspath(test_dir))
             
@@ -562,6 +631,9 @@ jobs:
     - name: Show test directory structure for tests_avenugo3
       run: find ./tests_avenugo3 -type f | sort
 
+    - name: Show test directory structure for tests_akakadi
+      run: find ./tests_akakadi -type f | sort
+
     - name: Run tests_akulka24 with patched MongoDB
       run: |
         PYTHONPATH=$PWD pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
@@ -570,10 +642,14 @@ jobs:
       run: |
         PYTHONPATH=$PWD pytest ./tests_avenugo3/ -v --showlocals --no-header --timeout=60
 
+    - name: Run tests_akakadi with patched MongoDB
+      run: |
+        PYTHONPATH=$PWD pytest ./tests_akakadi/ -v --showlocals --no-header --timeout=60
+
     - name: Run coverage for all test folders
       if: always()  # Run even if tests fail
       run: |
-        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/
+        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/ ./tests_akakadi/
         coverage report -m
 
     - name: Upload coverage report
