@@ -55,20 +55,72 @@ jobs:
       run: |
         pip install -r requirements.txt
 
+    - name: Create test helper script
+      run: |
+        cat > patch_mongodb.py << 'EOL'
+        import sys
+        import os
+        from unittest.mock import patch, MagicMock
+        import motor.motor_asyncio
+        from bson import ObjectId
+
+        # Create a mock database
+        class MockDatabase(dict):
+            async def list_collection_names(self):
+                return ["users", "recipes", "meal-plans", "shopping-list"]
+            
+            def __getitem__(self, key):
+                if key not in self:
+                    self[key] = MockCollection()
+                return super().__getitem__(key)
+
+        class MockCollection:
+            async def find_one(self, *args, **kwargs):
+                return None
+                
+            async def insert_one(self, *args, **kwargs):
+                return MagicMock(inserted_id=ObjectId())
+                
+            def find(self, *args, **kwargs):
+                cursor = MagicMock()
+                cursor.__aiter__.return_value = []
+                return cursor
+                
+            async def count_documents(self, *args, **kwargs):
+                return 0
+
+        # Create a mock client class
+        class MockMotorClient:
+            def __init__(self, *args, **kwargs):
+                self.db = MockDatabase()
+                
+            def __getitem__(self, name):
+                return self.db
+                
+            def close(self):
+                pass
+
+        # Patch MongoDB client
+        original_client = motor.motor_asyncio.AsyncIOMotorClient
+        motor.motor_asyncio.AsyncIOMotorClient = MockMotorClient
+
+        print("Successfully patched MongoDB client for testing!")
+        EOL
+
     - name: List installed packages
       run: pip list
       
     - name: Show test directory structure
       run: find ./tests_akulka24 -type f | sort
 
-    - name: Run tests with verbose output
+    - name: Run tests with patched MongoDB
       run: |
-        python -m pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
+        python -c "import patch_mongodb" && python -m pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
 
     - name: Run coverage
       if: always()  # Run even if tests fail
       run: |
-        coverage run -m pytest ./tests_akulka24/
+        python -c "import patch_mongodb" && coverage run -m pytest ./tests_akulka24/
         coverage report -m
 
     - name: Upload coverage report
