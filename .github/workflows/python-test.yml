@@ -97,6 +97,12 @@ jobs:
                 
             def limit(self, *args, **kwargs):
                 return self
+                
+            def to_list(self, *args, **kwargs):
+                # This method is commonly used in FastAPI applications
+                async def async_to_list():
+                    return list(self.data)
+                return async_to_list()
 
         class MockCollection:
             def __init__(self, name="test_collection"):
@@ -414,7 +420,7 @@ jobs:
             mod = real_import(name, globals, locals, fromlist, level)
             
             # If we're importing test files, patch their helper functions
-            if name.startswith('tests_akulka24'):
+            if name.startswith('tests_akulka24') or name.startswith('tests_avenugo3'):
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
                     if callable(attr) and attr_name == 'create_recipe_mock':
@@ -481,7 +487,7 @@ jobs:
             
         # Step 3: Add support for patching test files directly
         for module_name in list(sys.modules.keys()):
-            if module_name.startswith('tests_akulka24'):
+            if module_name.startswith('tests_akulka24') or module_name.startswith('tests_avenugo3'):
                 mod = sys.modules[module_name]
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
@@ -538,6 +544,11 @@ jobs:
                 
             unittest.mock.patch = patched_patch
             
+            # Support for tests in multiple directories
+            for test_dir in ['tests_akulka24', 'tests_avenugo3']:
+                if os.path.exists(test_dir):
+                    sys.path.insert(0, os.path.abspath(test_dir))
+            
             # No other setup needed - the patching happens on import
             pass
         EOL
@@ -545,17 +556,24 @@ jobs:
     - name: List installed packages
       run: pip list
        
-    - name: Show test directory structure
+    - name: Show test directory structure for tests_akulka24
       run: find ./tests_akulka24 -type f | sort
 
-    - name: Run tests with patched MongoDB
+    - name: Show test directory structure for tests_avenugo3
+      run: find ./tests_avenugo3 -type f | sort
+
+    - name: Run tests_akulka24 with patched MongoDB
       run: |
         PYTHONPATH=$PWD pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
 
-    - name: Run coverage
+    - name: Run tests_avenugo3 with patched MongoDB
+      run: |
+        PYTHONPATH=$PWD pytest ./tests_avenugo3/ -v --showlocals --no-header --timeout=60
+
+    - name: Run coverage for all test folders
       if: always()  # Run even if tests fail
       run: |
-        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/
+        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/ ./tests_avenugo3/
         coverage report -m
 
     - name: Upload coverage report
