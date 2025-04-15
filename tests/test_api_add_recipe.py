@@ -325,3 +325,116 @@ def test_add_recipe_no_payload_burger(setup_db):
     client = TestClient(app)
     response = client.post("/recipe/add-recipe/")
     assert response.status_code == 422  
+
+def test_add_recipe_with_long_strings(setup_db):
+    """Test adding a recipe with very long strings in fields."""
+    recipe_data = {
+        "name": "A" * 5000,
+        "cookTime": "1H",
+        "prepTime": "30M",
+        "totalTime": "1H30M",
+        "description": "B" * 10000,
+        "images": ["https://example.com/long_string_test.jpg"],
+        "category": "Dessert",
+        "tags": ["Long", "String"],
+        "ingredientQuantities": ["1 unit"],
+        "ingredients": ["ingredient"],
+        "rating": "4",
+        "calories": "100",
+        "fat": "5",
+        "saturatedFat": "2",
+        "cholesterol": "0",
+        "sodium": "10",
+        "carbs": "20",
+        "fiber": "1",
+        "sugar": "5",
+        "protein": "3",
+        "servings": "1",
+        "instructions": ["Mix and cook."]
+    }
+
+    inserted_id = ObjectId()
+    setup_db["recipes"].insert_one.return_value.inserted_id = inserted_id
+    setup_db["recipes"].find_one.return_value = {**recipe_data, "_id": str(inserted_id)}
+
+    client = TestClient(app)
+    response = client.post("/recipe/add-recipe/", json=recipe_data)
+
+    assert response.status_code == 201
+    assert response.json()["name"] == recipe_data["name"]
+
+
+def test_add_recipe_with_minimal_fields(setup_db):
+    """Test adding a recipe with only required fields."""
+    recipe_data = {
+        "name": "Simple Toast",
+        "cookTime": "5M",
+        "prepTime": "2M",
+        "totalTime": "7M",
+        "description": "Just toast.",
+        "images": [],
+        "category": "Breakfast",
+        "tags": ["Toast"],
+        "ingredientQuantities": ["2 slices"],
+        "ingredients": ["bread"],
+        "rating": "3",
+        "calories": "200",
+        "fat": "2",
+        "saturatedFat": "1",
+        "cholesterol": "0",
+        "sodium": "100",
+        "carbs": "30",
+        "fiber": "2",
+        "sugar": "3",
+        "protein": "5",
+        "servings": "1",
+        "instructions": ["Toast bread and serve."]
+    }
+
+    inserted_id = ObjectId()
+    setup_db["recipes"].insert_one.return_value.inserted_id = inserted_id
+    setup_db["recipes"].find_one.return_value = {**recipe_data, "_id": str(inserted_id)}
+
+    client = TestClient(app)
+    response = client.post("/recipe/add-recipe/", json=recipe_data)
+
+    assert response.status_code == 201
+    assert response.json()["name"] == recipe_data["name"]
+
+
+def test_add_recipe_with_duplicate_ingredients(setup_db):
+    """Test adding a recipe with duplicate ingredients to check system handling."""
+    recipe_data = {
+        "name": "Cheesy Bread",
+        "cookTime": "15M",
+        "prepTime": "10M",
+        "totalTime": "25M",
+        "description": "Cheese on bread — simple and tasty.",
+        "images": [],
+        "category": "Snack",
+        "tags": ["Cheese", "Bread"],
+        "ingredientQuantities": ["2 slices", "100g", "100g"],
+        "ingredients": ["bread", "cheese", "cheese"],  # Duplicate
+        "rating": "4",
+        "calories": "300",
+        "fat": "15",
+        "saturatedFat": "8",
+        "cholesterol": "30",
+        "sodium": "400",
+        "carbs": "20",
+        "fiber": "1",
+        "sugar": "3",
+        "protein": "12",
+        "servings": "2",
+        "instructions": ["Place cheese on bread.", "Grill until cheese melts."]
+    }
+
+    inserted_id = ObjectId()
+    setup_db["recipes"].insert_one.return_value.inserted_id = inserted_id
+    setup_db["recipes"].find_one.return_value = {**recipe_data, "_id": str(inserted_id)}
+
+    client = TestClient(app)
+    response = client.post("/recipe/add-recipe/", json=recipe_data)
+
+    assert response.status_code == 201
+    assert response.json()["name"] == recipe_data["name"]

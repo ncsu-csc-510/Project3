@@ -389,17 +389,6 @@ style={{
 
               </Grid>
               <Grid item xs={12} textAlign={'left'} style={{ background: theme.background, color: theme.color,  }}>
-                <div style={{ marginBottom: '10px' }}>
-                  <Typography variant="body1">Servings: {servings}</Typography>
-                  <input
-                    type="range"
-                    min={1}
-                    max={10}
-                    value={servings}
-                    onChange={(e) => setServings(Number(e.target.value))}
-                    style={{ width: '100%' }}
-                  />
-                </div>
 
                 <Typography variant="h6">
                   Ingredients:
