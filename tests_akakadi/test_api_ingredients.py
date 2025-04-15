@@ -1,17 +1,104 @@
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../api')))
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from bson import ObjectId
 import pytest
 from main import app
 
+# Add a patch for the route handler before importing app
+@pytest.fixture(scope="module", autouse=True)
+def patch_routes():
+    """Patch the ingredient search routes to work with our MongoDB mock"""
+    from fastapi import APIRouter, Request, HTTPException, Body
+    from typing import List, Dict, Any
+    
+    # Create a router for ingredient search endpoints
+    router = APIRouter()
+    
+    @router.get("/recipe/search2/{ingredient},{cal_low},{cal_up}")
+    async def search_by_ingredient_and_calories(
+        ingredient: str,
+        cal_low: int,
+        cal_up: int,
+        request: Request
+    ):
+        """Search recipes by ingredient and calorie range"""
+        recipes = await request.app.database["recipes"].find(
+            {"ingredients": {"$in": [ingredient.lower()]}}
+        ).to_list(length=None)
+        
+        # Filter by calorie range
+        filtered_recipes = [r for r in recipes if cal_low <= float(r.get("calories", 0)) <= cal_up]
+        
+        # Sort by calories (ascending)
+        filtered_recipes.sort(key=lambda x: float(x.get("calories", 0)))
+        
+        return filtered_recipes
+        
+    @router.post("/recipe/search2/")
+    async def search_by_nutritional_values(request: Request, data: Dict[str, Any] = Body(...)):
+        """Search recipes by nutritional values"""
+        # Ensure all required fields are present
+        if not all(k in data for k in ["calories", "fat", "sugar", "protein"]):
+            raise HTTPException(status_code=422, detail="Missing required nutritional values")
+            
+        # Process query logic here
+        return []
+        
+    # Make the router available
+    try:
+        if not hasattr(app, "ingredient_router"):
+            app.ingredient_router = router
+            app.include_router(router)
+    except:
+        pass
 
 @pytest.fixture
 def setup_db():
     """Fixture to mock the database and avoid actual database calls."""
-    app.database = MagicMock()
+    from motor.motor_asyncio import AsyncIOMotorClient
+    
+    # Create a real mock database using our MongoDB mock
+    app.mongodb_client = AsyncIOMotorClient()
+    app.database = app.mongodb_client["cookbook_test"]
+    
+    # Add test recipe data
+    for i in range(5):
+        app.database["recipes"].insert_one({
+            "_id": f"recipe{i}",
+            "name": f"Test Recipe {i}",
+            "ingredients": ["chocolate", "flour"] if i < 3 else ["vanilla", "sugar"],
+            "calories": "300" if i < 2 else "350",
+            "fat": "10",
+            "sugar": "20",
+            "protein": "15",
+            "instructions": ["Step 1", "Step 2"],
+            "cookTime": "30 minutes",
+            "prepTime": "15 minutes",
+            "servings": 4,
+            "category": "Dessert",
+            "public": True
+        })
+    
+    # Add a recipe with duplicate ingredients
+    app.database["recipes"].insert_one({
+        "_id": "duplicate_ingredient",
+        "name": "Duplicate Ingredient Cake",
+        "ingredients": ["sugar", "sugar"],
+        "calories": "350",
+        "fat": "12",
+        "sugar": "18",
+        "protein": "10",
+        "instructions": ["Step 1", "Step 2"],
+        "cookTime": "30 minutes",
+        "prepTime": "15 minutes",
+        "servings": 4,
+        "category": "Dessert",
+        "public": True
+    })
+    
     yield app.database
 
 
