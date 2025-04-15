@@ -485,6 +485,9 @@ jobs:
                             results.sort(key=lambda x: x.get(field, ""), reverse=reverse)
                 
                 return MockCursor(results)
+                
+            async def list_collection_names(self):
+                return ["users", "recipes", "meal-plans", "shopping-list", "ingredients"]
 
         class MockDatabase:
             def __init__(self, *args, **kwargs):
@@ -503,7 +506,7 @@ jobs:
                 return self[name]
                 
             async def list_collection_names(self):
-                return ["users", "recipes", "meal-plans", "shopping-list"]
+                return ["users", "recipes", "meal-plans", "shopping-list", "ingredients"]
 
         class MockMotorClient:
             def __init__(self, *args, **kwargs):
@@ -676,139 +679,6 @@ jobs:
         print("MongoDB client and related modules successfully patched for testing!")
         EOL
 
-    - name: Create conftest.py for pytest
-      run: |
-        cat > conftest.py << 'EOL'
-        import pytest
-        import sys
-        import os
-        import patch_mongodb  # Import our patch first
-
-        # Add a fixture to ensure the patch is loaded for all tests
-        @pytest.fixture(autouse=True, scope="session")
-        def mock_startup():
-            # Import FastAPI HTTPException for our mocks
-            from fastapi import HTTPException
-            from fastapi import Request, Response
-            from starlette.responses import RedirectResponse, JSONResponse
-            
-            # Add routes for tests_akakadi to app instance
-            from main import app
-            import inspect
-            from unittest.mock import AsyncMock
-            
-            # Add recipe/add-recipe/ endpoint for tests_akakadi
-            @app.post("/recipe/add-recipe/")
-            async def add_recipe(request: Request):
-                try:
-                    data = await request.json()
-                    if not data.get("name"):
-                        return JSONResponse(status_code=400, content={"detail": "Required fields missing"})
-                    if not data.get("instructions") or len(data.get("instructions")) == 0:
-                        return JSONResponse(status_code=400, content={"detail": "Missing required fields: instructions"})
-                    recipe_id = str(request.app.database["recipes"].insert_one.return_value.inserted_id)
-                    data["_id"] = recipe_id
-                    return JSONResponse(status_code=201, content=data)
-                except Exception as e:
-                    return JSONResponse(status_code=500, content={"detail": str(e)})
-            
-            # Add meal-plan endpoints for tests_akakadi
-            @app.post("/meal-plan/")
-            async def save_meal_plan(request: Request):
-                try:
-                    data = await request.json()
-                    # Call a mocked method to record the call
-                    request.app.database["meal_plans"].update_one(
-                        {"day": data["day"]}, 
-                        {"$set": {"recipe": data["recipe"]}}, 
-                        upsert=True
-                    )
-                    return JSONResponse(status_code=200, content={"message": "Meal plan saved successfully."})
-                except Exception as e:
-                    return JSONResponse(status_code=500, content={"detail": "An error occurred while saving the meal plan."})
-            
-            @app.get("/meal-plan/")
-            async def get_meal_plans(request: Request):
-                try:
-                    meal_plans = list(request.app.database["meal_plans"].find({}))
-                    # Create a 7-day plan
-                    result = []
-                    for i in range(7):
-                        for plan in meal_plans:
-                            if plan.get("day") == i:
-                                result.append(plan)
-                                break
-                        else:
-                            result.append({str(i): None})
-                    return JSONResponse(status_code=200, content=result)
-                except Exception as e:
-                    return JSONResponse(status_code=500, content={"detail": str(e)})
-            
-            # Add search2 endpoints for tests_akakadi
-            @app.get("/search2/{ingredient},{calories_low},{calories_up}")
-            async def search_by_ingredient_and_calories(ingredient: str, calories_low: int, calories_up: int, request: Request):
-                try:
-                    # Mock find() to return recipes matching the ingredient and calorie range
-                    recipes = list(request.app.database["recipes"].find({}))
-                    matching_recipes = []
-                    for recipe in recipes:
-                        if ingredient.lower() in [i.lower() for i in recipe.get("ingredients", [])]:
-                            cal = recipe.get("calories", "0")
-                            if isinstance(cal, str) and cal.isdigit():
-                                cal = float(cal)
-                            if calories_low <= cal <= calories_up:
-                                matching_recipes.append(recipe)
-                    return JSONResponse(status_code=200, content=matching_recipes)
-                except Exception as e:
-                    return JSONResponse(status_code=500, content={"detail": str(e)})
-            
-            @app.post("/recipe/search2/")
-            async def advanced_search(request: Request):
-                try:
-                    data = await request.json()
-                    
-                    # Validate data
-                    if "page" not in data:
-                        return JSONResponse(status_code=422, content={"detail": "Missing page parameter"})
-                    if data["page"] < 1:
-                        return JSONResponse(status_code=422, content={"detail": "Page must be >= 1"})
-                    
-                    # Return a mock response
-                    return JSONResponse(status_code=200, content={"recipes": [], "page": data["page"], "count": 0})
-                except Exception as e:
-                    return JSONResponse(status_code=500, content={"detail": str(e)})
-            
-            # Create patch for handling test path mismatches
-            import unittest.mock
-            
-            # Patch unittest.mock.patch to handle our specific cases
-            original_patch = unittest.mock.patch
-            
-            def patched_patch(target, *args, **kwargs):
-                # For the specific test cases that are failing
-                if target == 'api.routes.user_signup':
-                    from fastapi import HTTPException
-                    async def mock_handler(*args, **kwargs):
-                        if kwargs.get('email') == 'existing@example.com':
-                            raise HTTPException(status_code=400, detail="User already exists")
-                        return {"id": "mock_id", "email": kwargs.get('email'), "name": kwargs.get('name')}
-                    return original_patch(target, mock_handler)
-                    
-                # Add other special cases as needed
-                
-                return original_patch(target, *args, **kwargs)
-                
-            unittest.mock.patch = patched_patch
-            
-            # Support for tests in multiple directories
-            for test_dir in ['tests_akulka24', 'tests_avenugo3', 'tests_akakadi']:
-                if os.path.exists(test_dir):
-                    sys.path.insert(0, os.path.abspath(test_dir))
-            
-            # No other setup needed - the patching happens on import
-            pass
-        EOL
-
     - name: List installed packages
       run: pip list
        
@@ -831,11 +701,8 @@ jobs:
 
     - name: Run tests_akakadi with patched MongoDB
       run: |
-        # Run each test file separately to avoid module name conflicts
-        for test_file in ./tests_akakadi/*.py; do
-          echo "Running test file: $test_file"
-          PYTHONPATH=$PWD python -m pytest "$test_file" -v --showlocals --no-header --timeout=60 || true
-        done
+        # Create the conftest.py file first
+        PYTHONPATH=$PWD pytest ./tests_akakadi/ -v --showlocals --no-header --timeout=60
 
     - name: Run coverage for test folders
       if: always()  # Run even if tests fail
@@ -843,11 +710,8 @@ jobs:
         # Run coverage separately for each test directory to avoid module conflicts
         PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/
         PYTHONPATH=$PWD coverage run -a -m pytest ./tests_avenugo3/
-        # For tests_akakadi, run each file separately
-        for test_file in ./tests_akakadi/*.py; do
-          echo "Running coverage for: $test_file"
-          PYTHONPATH=$PWD coverage run -a -m pytest "$test_file" || true
-        done
+        # Run coverage for tests_akakadi
+        PYTHONPATH=$PWD coverage run -a -m pytest ./tests_akakadi/
         coverage report -m
 
     - name: Upload coverage report
