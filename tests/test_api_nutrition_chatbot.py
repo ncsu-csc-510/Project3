@@ -56,3 +56,44 @@ def test_get_nutrition_recommendations_invalid_input(setup_chatbot):
 
     response = client.post("/nutrition-chatbot/", json=invalid_payload)
     assert response.status_code == 422  
+
+
+def test_get_nutrition_recommendations_invalid_types(setup_chatbot):
+    """Test with incorrect data types (e.g., string instead of number)."""
+    invalid_payload = {
+        "weight": "seventy",   # Should be numeric
+        "height": 175,
+        "age": "thirty",       # Should be numeric
+        "gender": "male",
+        "activity_level": "moderate",
+        "goal": "maintain weight"
+    }
+
+    response = client.post("/nutrition-chatbot/", json=invalid_payload)
+    assert response.status_code == 422  # FastAPI validation error
+
+
+def test_get_nutrition_recommendations_empty_payload(setup_chatbot):
+    """Test with completely empty payload."""
+    response = client.post("/nutrition-chatbot/", json={})
+    assert response.status_code == 422
+
+def test_get_nutrition_recommendations_high_values(setup_chatbot):
+    """Test with very high but valid values (e.g., bodybuilders)."""
+    payload = {
+        "weight": 200,
+        "height": 220,
+        "age": 35,
+        "gender": "male",
+        "activity_level": "high",
+        "goal": "gain weight"
+    }
+
+    mock_chat_response = MagicMock()
+    mock_chat_response.choices = [MagicMock(message=MagicMock(content="Bulk mode activated."))]
+    setup_chatbot.chat.completions.create.return_value = mock_chat_response
+
+    response = client.post("/nutrition-chatbot/", json=payload)
+
+    assert response.status_code == 200
+    assert "recommended_calories" in response.json()

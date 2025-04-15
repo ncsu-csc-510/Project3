@@ -145,3 +145,62 @@ def test_advanced_search_no_results(setup_db):
     response = client.get("/search2/fish,100,300")
     assert response.status_code == 200
     assert response.json() == []  # Empty list when no matches
+
+
+def test_save_meal_plan_invalid_day_type(setup_db):
+    """ Day should be an integer — test invalid type (string). """
+    invalid_entry = {
+        "day": "Tuesday",  # Invalid type
+        "recipe": {"name": "Smoothie", "calories": "250"}
+    }
+
+    client = TestClient(app)
+    response = client.post("/meal-plan/", json=invalid_entry)
+
+    assert response.status_code == 422  # Unprocessable Entity
+
+
+def test_get_meal_plan_partial_week(setup_db):
+    """ Test partial meal plan (3 days out of 7 filled). """
+    partial_plan = [
+        {"_id": "1", "day": 0, "recipe": {"name": "Omelette"}},
+        {"_id": "2", "day": 2, "recipe": {"name": "Stew"}},
+        {"_id": "3", "day": 4, "recipe": {"name": "Pizza"}}
+    ]
+
+    setup_db["meal_plans"].find.return_value = partial_plan
+
+    client = TestClient(app)
+    response = client.get("/meal-plan/")
+
+    expected_response = [
+        {"_id": "1", "day": 0, "recipe": {"name": "Omelette"}},
+        {"1": None},
+        {"_id": "2", "day": 2, "recipe": {"name": "Stew"}},
+        {"3": None},
+        {"_id": "3", "day": 4, "recipe": {"name": "Pizza"}},
+        {"5": None},
+        {"6": None}
+    ]
+
+    assert response.status_code == 200
+    assert response.json() == expected_response
+
+def test_advanced_search_with_additional_ingredients(setup_db):
+    """ Recipe contains target ingredient among many — still should match. """
+    recipe = {
+        "_id": str(ObjectId()),
+        "name": "Loaded Chicken Bowl",
+        "ingredients": ["chicken", "rice", "beans"],
+        "calories": "350"
+    }
+
+    cursor_mock = MagicMock()
+    cursor_mock.__iter__.return_value = iter([recipe])
+    app.database["recipes"].find.return_value = cursor_mock
+
+    client = TestClient(app)
+    response = client.get("/search2/chicken,300,400")
+
+    assert response.status_code == 200
+    assert response.json() == [recipe]

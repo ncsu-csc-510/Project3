@@ -189,3 +189,56 @@ def test_add_new_recipe(setup_db):
     
     # No need to actually call delete since we're mocking everything
     # This test is focused only on the add recipe functionality
+
+
+def test_add_recipe_with_missing_required_field(setup_db):
+    """Test adding a recipe with missing required fields like name."""
+    client = TestClient(app)
+    incomplete_recipe = {
+        "cookTime": "1H",
+        "ingredients": ["flour", "sugar"],
+        "instructions": ["Mix and bake."]
+    }
+
+    response = client.post("/add-recipe/", json=incomplete_recipe)
+    assert response.status_code == 422  # Should fail validation
+
+
+def test_update_shopping_list_empty_payload(setup_db):
+    """Test posting an empty list to the shopping list update endpoint."""
+    client = TestClient(app)
+    response = client.post("/shopping-list/update", json=[])
+    assert response.status_code == 400
+    assert response.json()["detail"] == "No new items to add."
+
+def test_update_item_not_modified(setup_db):
+    """Test updating an item where nothing changes — simulate no modification."""
+    app.database["shopping-list"].find.return_value = [{
+        "_id": ObjectId("60b8d2950d0a2c8b75a3b9f9"),
+        "name": "Banana", "quantity": 3, "unit": "kg", "checked": False
+    }]
+    
+    app.database["shopping-list"].update_one.return_value.modified_count = 0
+
+    client = TestClient(app)
+    response = client.put("/shopping-list/60b8d2950d0a2c8b75a3b9f9", json={
+        "name": "Banana",
+        "quantity": 3,
+        "unit": "kg",
+        "checked": False
+    })
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Item updated successfully"
+
+
+def test_delete_item_not_found(setup_db):
+    """Test deleting an item that is not found in the DB."""
+    # Simulate no item found for deletion
+    app.database["shopping-list"].delete_one.return_value.deleted_count = 0
+
+    client = TestClient(app)
+    response = client.delete(f"/shopping-list/{ObjectId()}")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Item not found"
