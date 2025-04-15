@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 /*
 
@@ -20,82 +21,66 @@ import themes from '../Themes/themes'
  */
 
 function Navbar() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme } = useTheme()
+  const navigate = useNavigate()
+  const userEmail = localStorage.getItem('userEmail')
+  const userName = localStorage.getItem('userName')
 
-  // Function to handle theme change
-  const handleThemeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    toggleTheme(event.target.value)
+  const handleLogout = () => {
+    localStorage.removeItem('userEmail')
+    localStorage.removeItem('userName')
+    navigate('/login')
   }
 
   return (
     <section className="navbar" style={{ backgroundColor: theme.background }}>
-      <a href="/" className="navbar-item" style={{ color: theme.color }}>
-        Home
-      </a>
-      <a href="/meal" className="navbar-item" style={{ color: theme.color }}>
-        Meal Plan
-      </a>
-      <a href="/about" className="navbar-item" style={{ color: theme.color }}>
-        About
-      </a>
-      <a href="/faq" className="navbar-item" style={{ color: theme.color }}>
-        FAQs
-      </a>
-      <a href="/contact" className="navbar-item" style={{ color: theme.color }}>
-        Contact Us
-      </a>
-      <a
-        href="/shoppinglist"
-        className="navbar-item"
-        style={{ color: theme.color }}
-      >
-        Shopping List
-      </a>
-      <a href="/favorites" className="navbar-item" style={{ color: theme.color }}>
-        Favorites
-      </a>
-      <a href="/add-recipe" className="navbar-item" style={{ color: theme.color }}>
-        Add recipe
-      </a>
-      {/* Theme Dropdown */}
-
-      <div className="theme-selector">
-        <label htmlFor="theme-dropdown" style={{ color: theme.color }}>
-          Select Theme:
-        </label>
-        <select
-          id="theme-dropdown"
-          onChange={handleThemeChange}
-          value={Object.keys(themes).find(
-            (themeName) =>
-              themes[themeName as keyof typeof themes].background ===
-              theme.background
-          )}
-          style={{
-            backgroundColor: theme.background,
-            color: theme.color,
-            cursor: 'pointer',
-            border: `1px solid ${theme.color}`,
-          }}
-        >
-          {Object.keys(themes).map((themeName) => (
-            <option
-              key={themeName}
-              value={themeName}
-              style={{
-                backgroundColor:
-                  themes[themeName as keyof typeof themes].background,
-                color: themes[themeName as keyof typeof themes].color,
-              }}
-            >
-              {themeName}
-            </option>
-          ))}
-        </select>
-      </div>
-      <a href="/signup" className="navbar-item" style={{ color: theme.color }}>
-        Signup
-      </a>
+      {userEmail ? (
+        <>
+          <div className="navbar-left">
+            <a href="/home" className="navbar-item" style={{ color: theme.color }}>
+              Home
+            </a>
+            <a href="/meal" className="navbar-item" style={{ color: theme.color }}>
+              Meal Plan
+            </a>
+            <a href="/shoppinglist" className="navbar-item" style={{ color: theme.color }}>
+              Shopping List
+            </a>
+            <a href="/favorites" className="navbar-item" style={{ color: theme.color }}>
+              Favorites
+            </a>
+            <a href="/add-recipe" className="navbar-item" style={{ color: theme.color }}>
+              Add recipe
+            </a>
+            <a href="/what-to-eat" className="navbar-item" style={{ color: theme.color }}>
+              What to Eat
+            </a>
+          </div>
+          <div className="navbar-right">
+            <div className="user-section">
+              <span className="user-name" style={{ color: theme.color }}>
+                Welcome, {userName}
+              </span>
+              <button
+                className="logout-button"
+                onClick={handleLogout}
+                style={{ color: theme.color }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="navbar-right">
+          <a href="/login" className="navbar-item" style={{ color: theme.color }}>
+            Login
+          </a>
+          <a href="/signup" className="navbar-item" style={{ color: theme.color }}>
+            Sign Up
+          </a>
+        </div>
+      )}
     </section>
   )
 }

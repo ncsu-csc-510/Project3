@@ -1,16 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Box,
   Container,
-  Typography,
   Grid,
+  Typography,
+  Button,
+  Paper,
   Card,
   CardContent,
   CardMedia,
-  Button,
-  Box,
-  Paper,
+  CircularProgress,
+  IconButton,
+  Divider,
 } from '@mui/material';
+import { useTheme } from '../../Themes/themeContext';
+import SearchIcon from '@mui/icons-material/Search';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+// Import images from the photos directory
+import first from './photos/first.jpg';
+import second from './photos/second.jpg';
+import third from './photos/third.jpg';
+import fourth from './photos/fourth.jpg';
+import fifth from './photos/fifth.jpg';
+import sixth from './photos/sixth.jpg';
+import seventh from './photos/seventh.jpg';
+import eighth from './photos/eighth.jpg';
+import nineth from './photos/nineth.jpg';
+import tenth from './photos/tenth.jpg';
 
 /*
 
@@ -22,164 +41,328 @@ this file. If not, please write to: help.cookbook@gmail.com
 
 */
 
-import first from './photos/first.jpg'
-import second from './photos/second.jpg'
-import third from './photos/third.jpg'
-import fourth from './photos/fourth.jpg'
-import fifth from './photos/fifth.jpg'
-import sixth from './photos/sixth.jpg'
-import seventh from './photos/seventh.jpg'
-import eighth from './photos/eighth.jpg'
-import nineth from './photos/nineth.jpg'
-import tenth from './photos/tenth.jpg'
-import { useTheme } from '../../Themes/themeContext'
+interface Recipe {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  ingredients: string[];
+  instructions: string[];
+  images: string[];
+  prepTime?: string;
+  cookTime?: string;
+  servings?: string;
+  calories?: string;
+  fat?: string;
+  protein?: string;
+  carbs?: string;
+}
 
 const HomePage = () => {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const featuredRecipes = [
-    { image: first, title: 'Italian Pasta' },
-    { image: second, title: 'Fresh Salad' },
-    { image: third, title: 'Grilled Steak' },
-    { image: fourth, title: 'Vegetable Curry' },
-    { image: fifth, title: 'Seafood Platter' },
+  useEffect(() => {
+    // Load favorite recipes from localStorage
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites') ?? '[]');
+    setFavoriteRecipes(savedFavorites);
+    setIsLoading(false);
+  }, []);
+
+  const handleRecipeClick = (recipeId: string) => {
+    navigate(`/recipe-details/${recipeId}`);
+  };
+
+  const features = [
+    {
+      icon: <SearchIcon sx={{ fontSize: 40 }} />,
+      title: 'Smart Search',
+      description: 'Find recipes based on ingredients you have',
+    },
+    {
+      icon: <FavoriteIcon sx={{ fontSize: 40 }} />,
+      title: 'Save Favorites',
+      description: 'Create your personal collection of beloved recipes',
+    },
+    {
+      icon: <RestaurantIcon sx={{ fontSize: 40 }} />,
+      title: 'Meal Planning',
+      description: 'Plan your weekly meals with ease',
+    },
+    {
+      icon: <AccessTimeIcon sx={{ fontSize: 40 }} />,
+      title: 'Quick Recipes',
+      description: 'Perfect for busy weeknight dinners',
+    },
   ];
 
   return (
-    <Box sx={{ backgroundColor: theme.background, color: theme.color, minHeight: '100vh' }}>
-      {/* Hero Section */}
-      <Paper
-        elevation={0}
+    <Box sx={{ backgroundColor: theme.background, color: theme.color }}>
+      {/* Hero Section with Gradient */}
+      <Box
         sx={{
-          position: 'relative',
-          backgroundColor: theme.headerColor,
+          background: `linear-gradient(135deg, ${theme.headerColor} 0%, ${theme.background} 100%)`,
           color: theme.color,
-          mb: 4,
-          py: 8,
-          px: 4,
+          position: 'relative',
+          overflow: 'hidden',
+          pt: { xs: 8, md: 12 },
+          pb: { xs: 10, md: 14 },
         }}
       >
         <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
+          <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Typography
-                variant="h2"
-                component="h1"
-                gutterBottom
-                sx={{ fontWeight: 'bold' }}
+              <Box sx={{ position: 'relative', zIndex: 2 }}>
+                <Typography
+                  variant="h1"
+                  component="h1"
+                  sx={{
+                    fontSize: { xs: '2.5rem', md: '3.5rem' },
+                    fontWeight: 800,
+                    mb: 3,
+                    letterSpacing: '-0.5px',
+                    lineHeight: 1.2,
+                    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  Your Personal
+                  <br />
+                  Recipe Assistant
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    mb: 4,
+                    opacity: 0.9,
+                    maxWidth: '500px',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Discover, cook, and share delicious recipes tailored to your ingredients and preferences.
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate('/recipe-list')}
+                  sx={{
+                    py: 2,
+                    px: 4,
+                    fontSize: '1.1rem',
+                    backgroundColor: theme.background,
+                    color: theme.headerColor,
+                    '&:hover': {
+                      backgroundColor: theme.color,
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  Start Cooking
+                </Button>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.1)',
+                    borderRadius: 4,
+                  },
+                }}
               >
-                Discover Delicious Recipes
+                <Box
+                  component="img"
+                  src={sixth}
+                  alt="Featured Recipe"
+                  sx={{
+                    width: '100%',
+                    height: 'auto',
+                    borderRadius: 4,
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                    transform: 'perspective(1000px) rotateY(-5deg)',
+                    transition: 'transform 0.5s ease',
+                    '&:hover': {
+                      transform: 'perspective(1000px) rotateY(0deg)',
+                    },
+                  }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Features Section */}
+      <Container maxWidth="lg" sx={{ py: 10 }}>
+        <Grid container spacing={4}>
+          {features.map((feature, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  height: '100%',
+                  textAlign: 'center',
+                  backgroundColor: 'transparent',
+                  border: `2px solid ${theme.headerColor}`,
+                  borderRadius: 3,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: `0 8px 24px rgba(0,0,0,0.15)`,
+                    borderColor: theme.color,
+                  },
+                }}
+              >
+                <IconButton
+                  sx={{
+                    mb: 2,
+                    color: theme.headerColor,
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                  }}
+                >
+                  {feature.icon}
+                </IconButton>
+                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
+                  {feature.title}
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  {feature.description}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+
+      {/* Favorite Recipes Section */}
+      <Box sx={{ backgroundColor: `${theme.headerColor}15`, py: 10 }}>
+        <Container maxWidth="lg">
+          <Typography
+            variant="h2"
+            component="h2"
+            gutterBottom
+            sx={{
+              textAlign: 'center',
+              mb: 6,
+              fontWeight: 800,
+              fontSize: { xs: '2rem', md: '2.5rem' },
+            }}
+          >
+            Your Favorite Recipes
+          </Typography>
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : favoriteRecipes.length > 0 ? (
+            <Grid container spacing={4}>
+              {favoriteRecipes.map((recipe) => (
+                <Grid item xs={12} sm={6} md={4} key={recipe._id}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      transition: 'all 0.3s ease',
+                      backgroundColor: theme.background,
+                      border: 'none',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                      '&:hover': {
+                        transform: 'translateY(-8px)',
+                        boxShadow: '0 12px 28px rgba(0,0,0,0.2)',
+                        cursor: 'pointer',
+                      },
+                    }}
+                    onClick={() => handleRecipeClick(recipe._id)}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="240"
+                      image={recipe.images && recipe.images.length > 0 
+                        ? recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))?.startsWith('http')
+                          ? recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))
+                          : `http://localhost:8000${recipe.images.find(img => !img.startsWith('https://via.placeholder.com'))}`
+                        : 'https://via.placeholder.com/300x200?text=No+Image'}
+                      alt={recipe.name}
+                      sx={{ 
+                        objectFit: 'cover',
+                      }}
+                    />
+                    <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                      <Typography gutterBottom variant="h5" component="h3" sx={{ fontWeight: 600 }}>
+                        {recipe.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {recipe.description}
+                      </Typography>
+                      {recipe.prepTime && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AccessTimeIcon fontSize="small" />
+                          <Typography variant="body2" color="text.secondary">
+                            {recipe.prepTime}
+                          </Typography>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Paper 
+              elevation={0}
+              sx={{ 
+                p: 6,
+                mt: 4,
+                mb: 4,
+                borderRadius: 3,
+                backgroundColor: theme.background,
+                color: theme.color,
+                textAlign: 'center',
+                border: `2px dashed ${theme.headerColor}40`,
+              }}
+            >
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+                No favorite recipes yet
               </Typography>
-              <Typography variant="h5" paragraph sx={{ mb: 4 }}>
-                Find the perfect recipe for any occasion, using ingredients you already have.
+              <Typography variant="body1" sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}>
+                Start exploring our collection and save your favorite recipes to create your personal cookbook!
               </Typography>
               <Button
                 variant="contained"
                 size="large"
                 onClick={() => navigate('/recipe-list')}
                 sx={{
-                  backgroundColor: theme.background,
-                  color: theme.headerColor,
+                  py: 2,
+                  px: 4,
+                  backgroundColor: theme.headerColor,
+                  color: theme.color,
                   '&:hover': {
                     backgroundColor: theme.color,
+                    color: theme.headerColor,
                   },
                 }}
               >
-                Explore Recipes
+                Browse Recipes
               </Button>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box
-                component="img"
-                src={sixth}
-                alt="Featured Recipe"
-                sx={{
-                  width: '100%',
-                  height: 'auto',
-                  borderRadius: 2,
-                  boxShadow: 3,
-                }}
-              />
-            </Grid>
-          </Grid>
+            </Paper>
+          )}
         </Container>
-      </Paper>
-
-      {/* Featured Recipes Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography
-          variant="h3"
-          component="h2"
-          gutterBottom
-          sx={{ textAlign: 'center', mb: 6, fontWeight: 'bold' }}
-        >
-          Featured Recipes
-        </Typography>
-        <Grid container spacing={4}>
-          {featuredRecipes.map((recipe, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'transform 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'scale(1.02)',
-                  },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={recipe.image}
-                  alt={recipe.title}
-                  sx={{ objectFit: 'cover' }}
-                />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography gutterBottom variant="h5" component="h3">
-                    {recipe.title}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
-      {/* Recipe Gallery Section */}
-      <Container maxWidth="lg" sx={{ py: 8 }}>
-        <Typography
-          variant="h3"
-          component="h2"
-          gutterBottom
-          sx={{ textAlign: 'center', mb: 6, fontWeight: 'bold' }}
-        >
-          Recipe Gallery
-        </Typography>
-        <Grid container spacing={2}>
-          {[seventh, eighth, nineth, tenth].map((image, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Box
-                component="img"
-                src={image}
-                alt={`Recipe ${index + 1}`}
-                sx={{
-                  width: '100%',
-                  height: 200,
-                  objectFit: 'cover',
-                  borderRadius: 2,
-                  transition: 'transform 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                  },
-                }}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+      </Box>
     </Box>
   );
 };

@@ -116,29 +116,65 @@ const AddRecipe = () => {
 
   const handleSubmit = async () => {
     try {
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        navigate('/login');
+        return;
+      }
+
+      // Format the recipe data to match the backend model
+      const formattedRecipe = {
+        name: recipe.name,
+        category: recipe.category,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        description: recipe.description,
+        cookTime: recipe.cookTime,
+        prepTime: recipe.prepTime,
+        totalTime: recipe.totalTime,
+        images: recipe.images,
+        tags: recipe.tags,
+        ingredientQuantities: recipe.ingredientQuantities,
+        rating: recipe.rating,
+        calories: recipe.calories,
+        fat: recipe.fat,
+        saturatedFat: recipe.saturatedFat,
+        cholesterol: recipe.cholesterol,
+        sodium: recipe.sodium,
+        carbs: recipe.carbs,
+        fiber: recipe.fiber,
+        sugar: recipe.sugar,
+        protein: recipe.protein,
+        servings: recipe.servings
+      };
+
       const response = await axios.post(
-        'http://localhost:8000/recipe/add-recipe/',
-        recipe
-      )
-      if (response.status === 201) {
+        `http://localhost:8000/recipes?email=${userEmail}`,
+        formattedRecipe
+      );
+      
+      if (response.status === 200) {
         setSnackbar({
           open: true,
           message: 'Recipe added successfully! 🎉',
           severity: 'success',
-        })
+        });
         setTimeout(() => {
-          navigate('/recipe-list')
-        }, 2000)
+          navigate('/recipe-list');
+        }, 2000);
       }
     } catch (err) {
       setSnackbar({
         open: true,
         message: 'Failed to add recipe. Please try again.',
         severity: 'error',
-      })
-      console.error('Failed to add recipe.', err)
+      });
+      console.error('Failed to add recipe.', err);
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        navigate('/login');
+      }
     }
-  }
+  };
 
   const renderStepContent = (step: number) => {
     switch (step) {

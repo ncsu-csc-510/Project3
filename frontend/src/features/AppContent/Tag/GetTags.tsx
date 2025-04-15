@@ -54,7 +54,7 @@ const GetTags = () => {
       if (ingredientsArray.length > 0) {
         sessionStorage.setItem('ingredients', JSON.stringify(ingredientsArray))
         dispatch(
-          getRecipeListInitiator('http://localhost:8000/recipe/search/', {
+          getRecipeListInitiator('http://localhost:8000/recipes/search/', {
             ingredients: ingredientsArray,
             page: 1,
           })

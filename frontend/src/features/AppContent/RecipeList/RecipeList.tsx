@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react'
-
-/*
-
-Copyright (C) 2022 SE CookBook - All Rights Reserved
-You may use, distribute and modify this code under the
-terms of the MIT license.
-You should have received a copy of the MIT license with
-this file. If not, please write to: help.cookbook@gmail.com
-
-*/
-
+import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import StarIcon from '@mui/icons-material/Star'
@@ -27,6 +17,7 @@ import {
   SelectChangeEvent,
   Box,
   FormHelperText,
+  CardMedia,
 } from '@mui/material'
 import { getRecipeInfoInitiator } from '../RecipeInformation/getRecipeInformation.action'
 import { getRecipeListInitiator } from './getRecipeList.action'
@@ -48,6 +39,15 @@ interface RecipeListData {
   prepTime: string
   category: string
   rating: string
+  images: string[]
+}
+
+interface Recipe {
+  _id: string
+  name: string
+  description: string
+  category: string
+  images: string[]
 }
 
 const RecipeList = () => {
@@ -66,6 +66,7 @@ const RecipeList = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedCookTime, setSelectedCookTime] = useState<string>('')
   const [hidden, setHidden] = useState<boolean>(false)
+  const [recipes, setRecipes] = useState<Recipe[]>([])
 
   const getRecipeListState = useSelector(
     (state: any) => state.getRecipeListAppState
@@ -88,6 +89,48 @@ const RecipeList = () => {
   }
 
   useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const userEmail = localStorage.getItem('userEmail')
+        if (!userEmail) {
+          navigateTo('/login')
+          return
+        }
+
+        // Fetch all recipes using the recipe-list endpoint
+        const response = await axios.get(`http://localhost:8000/recipes/recipe-list`)
+        if (response.data && response.data.recipes) {
+          setRecipes(response.data.recipes)
+        } else {
+          console.error('Invalid response format:', response.data)
+          setRecipes([])
+        }
+        
+        // Also dispatch the Redux action to fetch recipes by ingredients
+        const ingredientsArray = JSON.parse(
+          sessionStorage.getItem('ingredients') || '[]'
+        )
+        if (ingredientsArray.length > 0) {
+          dispatch(
+            getRecipeListInitiator('http://localhost:8000/recipes/search/', {
+              ingredients: ingredientsArray,
+              page: 1,
+            })
+          )
+        }
+      } catch (error) {
+        console.error('Error fetching recipes:', error)
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          navigateTo('/login')
+        }
+        setRecipes([])
+      }
+    }
+
+    fetchRecipes()
+  }, [navigateTo, dispatch])
+
+  useEffect(() => {
     let recipes = getRecipeListState.getRecipeListData['recipes']
     if (Array.isArray(recipes)) {
       recipes.forEach((item: any, index: number) => {
@@ -100,6 +143,7 @@ const RecipeList = () => {
             prepTime: item.prepTime,
             category: item.category,
             rating: item.rating,
+            images: item.images,
           })
         )
       })
@@ -144,7 +188,7 @@ const RecipeList = () => {
   }, [selectedCategory, selectedCookTime, recipeList])
 
   const gotoRecipe = (id: string) => {
-    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipe/' + id))
+    dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id))
     navigateTo('/recipe-details/' + id)
   }
 
@@ -156,7 +200,7 @@ const RecipeList = () => {
       sessionStorage.getItem('ingredients') || '[]'
     )
     dispatch(
-      getRecipeListInitiator('http://localhost:8000/recipe/search/', {
+      getRecipeListInitiator('http://localhost:8000/recipes/search/', {
         ingredients: ingredientsArray,
         page: value,
       })
@@ -171,6 +215,144 @@ const RecipeList = () => {
 
   const handleCookTimeChange = (event: SelectChangeEvent<string>) => {
     setSelectedCookTime(event.target.value)
+  }
+
+  const RecipeCard = ({ recipe }: { recipe: RecipeListData }) => {
+    const { theme } = useTheme()
+    const dispatch = useDispatch()
+    const navigateTo = useNavigate()
+
+    const handleClick = () => {
+      dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + recipe.id))
+      navigateTo('/recipe-details/' + recipe.id)
+    }
+
+    return (
+      <Card
+        sx={{
+          width: 300,
+          height: 300,
+          margin: 'auto',
+          backgroundColor: recipe.images?.[0] ? theme.background : theme.headerColor,
+          color: theme.color,
+          display: 'flex',
+          flexDirection: 'column',
+          '&:hover': {
+            transform: 'scale(1.02)',
+            transition: 'transform 0.2s ease-in-out',
+          },
+        }}
+      >
+        <CardActionArea 
+          onClick={handleClick}
+          sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {recipe.images?.[0] ? (
+            <CardMedia
+              component="img"
+              height="200"
+              image={`http://localhost:8000${recipe.images[0]}`}
+              alt={recipe.name}
+              sx={{ 
+                objectFit: 'cover',
+                flex: '0 0 200px'
+              }}
+            />
+          ) : (
+            <Box
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 3,
+              }}
+            >
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  lineHeight: 1.2,
+                  mb: 2,
+                }}
+              >
+                {recipe.name}
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ 
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {recipe.description}
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                mt: 2,
+              }}>
+                <StarIcon sx={{ color: '#FFD700', mr: 0.5 }} />
+                <Typography variant="body1">{recipe.rating || 'No rating'}</Typography>
+              </Box>
+            </Box>
+          )}
+          {recipe.images?.[0] && (
+            <CardContent sx={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              p: 2,
+            }}>
+              <Box>
+                <Typography 
+                  gutterBottom 
+                  variant="h6" 
+                  component="div"
+                  sx={{
+                    fontWeight: 'bold',
+                    mb: 1,
+                  }}
+                >
+                  {recipe.name}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {recipe.description}
+                </Typography>
+              </Box>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                mt: 1,
+              }}>
+                <StarIcon sx={{ color: '#FFD700', mr: 0.5 }} />
+                <Typography variant="body2">{recipe.rating || 'No rating'}</Typography>
+              </Box>
+            </CardContent>
+          )}
+        </CardActionArea>
+      </Card>
+    )
   }
 
   return (
@@ -386,66 +568,7 @@ const RecipeList = () => {
             : recipeList
           ).map((data: any, index: number) => {
             return (
-              <Card
-                variant="outlined"
-                sx={{
-                  width: 4 / 5,
-                  m: 1,
-                  backgroundColor: theme.background, // Card background from theme
-                  color: theme.color, // Card text color
-                  borderColor: theme.headerColor,
-                  borderWidth: '2px', // Set the desired border thickness
-                  borderStyle: 'solid', // Ensure the border style is solid
-                }}
-                key={index}
-              >
-                <CardActionArea onClick={() => gotoRecipe(data.id)}>
-                  <CardContent>
-                    <div className="d-flex flex-row">
-                      <Typography
-                        sx={{ fontWeight: 600, color: theme.color }} // Theme color for text
-                        gutterBottom
-                        variant="h5"
-                        component="div"
-                      >
-                        {data.name} |{' '}
-                        <StarIcon
-                          sx={{ color: '#dede04' }} // Star icon color
-                          fontSize="medium"
-                        />{' '}
-                        {data.rating}/5.0
-                      </Typography>
-                      <Typography
-                        gutterBottom
-                        variant="h6"
-                        component="span"
-                        className="supplemental-info"
-                        sx={{ color: theme.color }} // Theme color for text
-                      >
-                        {data.category}
-                      </Typography>
-                    </div>
-                    <Typography
-                      sx={{ textAlign: 'left', color: theme.color }} // Theme color for text
-                      variant="subtitle2"
-                    >
-                      Prep Time : {data.prepTime} | Cook Time : {data.cookTime}
-                    </Typography>
-
-                    <Typography
-                      sx={{
-                        textAlign: 'left',
-                        marginTop: 2,
-                        fontStyle: 'italic',
-                        color: theme.color, // Theme color for text
-                      }}
-                      variant="body2"
-                    >
-                      {data.description}
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
+              <RecipeCard key={index} recipe={data} />
             )
           })
         ) : (

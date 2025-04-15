@@ -1,19 +1,18 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/ncsugroup17/my-cookbook/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ncsugroup17/my-cookbook/actions/workflows/build.yml)
+[![Build Status](https://github.com/ncsu-csc-510/Project3/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ncsu-csc-510/Project3/actions/workflows/build.yml)
 [![DOI](https://zenodo.org/badge/888533527.svg)](https://doi.org/10.5281/zenodo.14200973)
-[![Repository size](https://img.shields.io/github/repo-size/ncsugroup17/my-cookbook)](https://github.com/ncsugroup17/my-cookbook)
+[![Repository size](https://img.shields.io/github/repo-size/ncsu-csc-510/Project3)](https://github.com/ncsu-csc-510/Project3)
 
-![Open Issues](https://img.shields.io/github/issues/ncsugroup17/my-cookbook)
-![Closed Issues](https://img.shields.io/github/issues-closed/ncsugroup17/my-cookbook)
-![Open Pull Requests](https://img.shields.io/github/issues-pr/ncsugroup17/my-cookbook)
-![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/ncsugroup17/my-cookbook)
+![Open Issues](https://img.shields.io/github/issues/ncsu-csc-510/Project3)
+![Closed Issues](https://img.shields.io/github/issues-closed/ncsu-csc-510/Project3)
+![Open Pull Requests](https://img.shields.io/github/issues-pr/ncsu-csc-510/Project3)
+![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/ncsu-csc-510/Project3)
 
-![AutoPEP8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/autopep8.yml/badge.svg)
-![Flake8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/flake8.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/ncsugroup17/my-cookbook/badge.svg?branch=main)](https://coveralls.io/github/ncsugroup17/my-cookbook?branch=main)
+![AutoPEP8 Workflow](https://github.com/ncsu-csc-510/Project3/actions/workflows/autopep8.yml/badge.svg)
+![Flake8 Workflow](https://github.com/ncsu-csc-510/Project3/actions/workflows/flake8.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/ncsu-csc-510/Project3/badge.svg)](https://coveralls.io/github/ncsu-csc-510/Project3)
 
 
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
@@ -30,100 +29,127 @@
   />
 </a>
 
-[![Join the Discord Server](https://img.shields.io/badge/Join%20the%20Discord%20Server-7289DA?style=flat&logo=discord&logoColor=white)](https://discord.gg/jqCNWqET)
-
 </div>
-<br><br>
 
-<br><br>
+<p align="center"><img width="700" src="https://github.com/ncsu-csc-510/Project3/blob/main/media/animation.gif"></p>
 
-# 🍳 What is CookBook?  
+<!--[![Join the Discord Server](https://img.shields.io/badge/Join%20the%20Discord%20Server-7289DA?style=flat&logo=discord&logoColor=white)](https://discord.gg/jqCNWqET) -->
 
-CookBook is your **ultimate AI-powered kitchen assistant** that makes cooking stress-free, fun, and delicious! 🎉  
-Whether you're working with a stocked pantry or just a few ingredients, CookBook will help you whip up amazing recipes tailored to what you have.  
+## Table of Contents
 
-### Why CookBook Stands Out:
-- **✨ Easy to Use**: A super-friendly platform where you can simply input your ingredients, and CookBook will suggest recipes instantly.  
-- **📖 Step-by-Step Guidance**: Get detailed, easy-to-follow instructions for every recipe.  
-- **🌟 Flexible & Adaptable**: Use as few or as many ingredients as you want—CookBook adjusts to you!  
-- **🍴 Recipes for Everyone**: Explore a variety of recipes across multiple cuisines and cultures.  
+- [What is My Cookbook?](#-what-is-my-cookbook)
+- [Why Choose My Cookbook?](#-why-choose-my-cookbook)
+- [What’s New & Key Features](#-whats-new--key-features)
+  - [New in This Release](#new-in-this-release)
+  - [Future Roadmap](#future-roadmap)
+- [Project Demo Video](#-project-demo-video)
+- [Better Software Design](#-better-software-design)
+- [Access the Website](#-access-the-website)
+- [Installations](#-installations)
+- [Examples](#examples)
+- [Style Checker and Code Formatter](#style-checker-and-code-fomatter)
+- [Code Coverage](#code-coverage)
+- [Meet the Team](#meet-the-team)
+- [Support](#support)
 
+# 🍳 What is My Cookbook?
+
+**My Cookbook** is a **revolutionary AI-powered meal planning assistant** that simplifies your cooking routine and transforms your kitchen experience. Whether you're a busy individual or a culinary enthusiast, My Cookbook combines intelligent recipe matching, personalized meal planning, nutrition tracking, and interactive cooking features to keep you organized and inspired.
+
+### Highlights
+
+- **AI-Powered Recipe Recommendations**: Get daily meal ideas tailored to your dietary preferences and cooking habits.  
+- **Personalized Meal Planning**: Create weekly meal plans with a simple drag-and-drop calendar.  
+- **Hands-Free Interactive Cooking Mode**: Use voice guidance and built-in timers to follow step-by-step recipes without touching your device.  
+- **Recipe Customization & Scaling**: Adjust servings with an intuitive slider; ingredient quantities and nutritional facts recalculate automatically.
+  
 With CookBook, you'll never run out of cooking inspiration again! 🥗🍜🍰  
 
 ---
 
-# 🤔 Why Choose CookBook?  
+# 🤔 Why Choose My Cookbook?
 
-Most of us have faced these situations:  
-1️⃣ **Craving something delicious**, but delivery isn't an option.  
-2️⃣ **Staring at your pantry**, unsure of what to make with what's available.  
-3️⃣ Wanting to try something **new and exciting**, but need guidance.
+Most of us have faced these situations:
 
-### How CookBook Solves These Problems:
-- 🍳 **Ingredient-Based Recipes**: Enter the ingredients you have, and CookBook finds recipes to match.  
-- 📜 **Step-by-Step Instructions**: Follow clear directions, even if you're new to cooking!  
-- 🌍 **Explore Global Cuisines**: Try dishes from different cultures with ease.  
-- 🖥️ **Familiar & Intuitive Interface**: Just like your favorite search engine, simply enter your ingredients and hit "Proceed" to get recipe suggestions.  
+1. **Craving something delicious**, but unsure of what to cook.  
+2. **Staring at your pantry**, uncertain how to use the ingredients you already have.  
+3. Wanting to try something **new and exciting**, but needing guidance or easy instructions.
+
+### How My Cookbook Solves These Problems
+
+- **Ingredient-Based Recipes**: Enter the ingredients you have, and **My Cookbook** finds recipes to match—minimizing food waste.  
+- **Voice-Guided Instructions**: Hands-free navigation with timers keeps your cooking smooth and accessible to all skill levels.  
+- **Detailed Nutrition Tracking**: Track macros and essential vitamins to meet dietary goals. 
 
 CookBook isn’t just a tool—it’s your cooking companion, saving time and bringing creativity to your kitchen! 🍲✨  
 
 ---
-
-# Content
-
-<p align="center">
-    |
-    <a href="#whats-new">What's New</a>
-  |
-  <a href="#installations">Installations</a>
-  |
-  <a href="#examples">Examples</a>
-  |
-  <a href="#style-checker-and-code-fomatter">Style Checker & Code Fomatter</a>
-  |
-  <a href="#code-coverage">Code Coverage</a>
-  |
-  <a href="#why-cookbook">Why CookBook?</a>
-  |
-   <a href="#meet-the-team">Team</a>
-  |
-  <a href="#support">Support</a>
-  |
   
 </p><br><br>
 
-
-
-# 🚀What's New?
+ # 🚀What's New?
 
 ## New features:
-- ⭐ **Instant Recipe Favorites**: Save your top recipes instantly with a single click!
-- 🍽️ **Share Your Own Recipes**: Unleash your inner chef by adding your own recipes!
-- 🥗 **Smart AI Nutrition-Based Recipe Filtering**: Find the perfect recipe that fits your dietary needs with advanced nutrition-based filtering! 
+### 1. **AI-Powered Recipe Matching**
+- Tailors suggestions to your cooking history and saved favorites.  
+- Seasonal and trending recipes appear automatically in daily suggestions.
+
+### 2. **Enhanced Personalized Meal Planning**
+- Build a customized weekly meal plan based on dietary preferences, available ingredients, and desired cooking time.  
+- Drag-and-drop calendar for effortless organization.  
+- Auto-generated shopping lists to simplify grocery trips.
+
+### 3. **Hands-Free Interactive Cooking Mode**
+- Real-time, **voice-guided** recipe walkthrough.  
+- Visual timers and spoken instructions for a smooth cooking flow.
+
+### 4. **Recipe Customization & Scaling**
+- Adjust servings with an intuitive slider.  
+- Automatic recalculation of ingredient quantities and nutrition facts.  
+- Perfect for cooking for one or hosting a large dinner party.
+
+### 5. **Serving Slider & Interactive Voice Mode**
+- A new UI slider for easy portion adjustment.  
+- Interactive voice-based cooking mode to keep your hands free and your focus on the dish.
   
 With CookBook, cooking becomes an adventure. What will you create today? 🥘👨‍🍳👩‍🍳  
 ---
-## 🎥 Demo Video  
 
-[![New Demo!](https://img.youtube.com/vi/IluD4IUT5kM/0.jpg)](https://youtu.be/fWfs_Mxc5CQ)
+## Future Roadmap
 
-Click the image above to watch the demo video on YouTube! 🚀
+> **Version I+1: Looking Ahead**
 
+- **Recipe Personalization**  
+  - Incorporate user ratings/feedback for more accurate personalization over time.  
+  - Auto-adjust recipe cooking times if you consistently cook faster or slower.
 
+- **Social Features**  
+  - Share recipes or adopt others’ meal plans for group dinners and potlucks.  
+  - Invite loved ones to comment or replicate your weekly plan.
 
-# 🚀 Better Software Design  
+- **Smart Kitchen Integration**  
+  - Link your My Cookbook account to smart appliances (e.g., ovens, Instant Pots) for automated temperature and time settings.  
+  - Receive reminders when you’re running low on common staples.
 
-CookBook is designed with scalability, safety, and reliability in mind. The software architecture includes modern solutions to ensure a seamless experience for users.
+- **Advanced Analytics**  
+  - Dive deeper into your cooking history—spot patterns in sugar intake, protein consumption, etc.  
+  - Get budget-friendly tips or alerts on sales for frequently used ingredients.
 
-### Scalability Enhancements  
-- **[Content Delivery Network (CDN)](https://github.com/yzhu27/CookBook/blob/main/docs/Scalability.md#content-delivery-network)**: Accelerates content delivery by distributing data globally.  
-- **[Load Balancing](https://github.com/yzhu27/CookBook/blob/main/docs/Scalability.md#load-balancing-on-cloudflare)**: Ensures optimal resource utilization and improves availability.  
-- **[Cache](https://github.com/yzhu27/CookBook/blob/main/docs/Scalability.md#cache)**: Reduces latency and increases speed by caching frequently accessed content.  
+> **Powering Precision**: *120+ Test Cases* ensure unmatched reliability in every release!
 
-### Safety Enhancements  
-- **[Domain](https://github.com/yzhu27/CookBook/blob/main/docs/Safety.md#domain)**: Ensures secure domain configurations.  
-- **[SSL/TLS](https://github.com/yzhu27/CookBook/blob/main/docs/Safety.md#ssltls)**: Encrypts communication between users and the server for secure data transfer.  
-- **[DDoS Protection](https://github.com/yzhu27/CookBook/blob/main/docs/Safety.md#ddos-protection)**: Protects against distributed denial-of-service attacks to ensure site reliability.  
+---
+
+## 🎥[Project3 Demo Video](https://drive.google.com/file/d/1aWom-LHXEbFp1CCc7HRJSVN7eAw5oOHb/view?usp=sharing)
+
+# 🚀 Better Software Design
+
+My Cookbook is designed with **scalability**, **safety**, and **reliability** in mind. We use modern solutions such as:
+
+- **CDN & Load Balancing**: Faster content delivery and improved availability.  
+- **SSL/TLS & DDoS Protection**: Secure data transfer and protection against malicious attacks.  
+- **Caching**: Reduces latency and speeds up your recipe searches.  
+
+For a more detailed breakdown, see our [Scalability](docs/Scalability.md) and [Safety](docs/Safety.md) documentation.
 
 ---
 
@@ -204,93 +230,58 @@ To set up the front end React app, do:
    ```bash
    npm start
 
-
-# Examples
-
-## ✨ New Feature 5.0
-For feature 5.0, we wanted to do something different, something that helps people search new recipe faster, while at the same time add new recipes and if the user like the recipe, making it their personal favourite.
-
-### ⭐ Instant Recipe Favorites  
-Save your top recipes instantly with a single click! The **"Add to Favorites"** button allows users to quickly store their chosen recipes in a personalized favorites section, eliminating the hassle of endless scrolling. Effortlessly retrieve your saved recipes anytime, with the **favorites section** always available for easy access to your preferred culinary creations.
-
-![Favourite Recipe](images/image-17.png)
-
-![Favourite Click](images/image-6.png)
-
-### 🍽️ Share Your Own Recipes  
-Unleash your inner chef by adding your own recipes! Simply fill out a form with essential details, including **ingredients**, **cooking time**, **step-by-step instructions**, and **photos** for a complete recipe description. For easy organization and quick retrieval, assign **categories** and **tags** to your creations, making your personalized recipe collection easily accessible anytime.
-
-![Add Recipe](images/image-7.png)
-
-![Filled Recipe](images/image-8.png)
-
-![Success Recipe Add](images/image-10.png) ![Error Recipe Add](images/image-11.png)
-
-### 🥗 Smart AI Nutrition-Based Recipe Filtering  
-Find the perfect recipe that fits your dietary needs with **advanced nutrition-based filtering**! Easily filter recipes by **calories**, **protein**, **carbs**, and **fats**, setting specific nutritional criteria to match your health goals. Plus, let the **AI recommend personalized recipes** tailored to popular dietary plans like **keto**, **vegan**, **low-carb**, or **high-protein**, ensuring every meal aligns with your lifestyle.
-
-![AI image](images/image-12.png)
-
-![Filled form](images/image-13.png) ![resutl](images/image-14.png)
-
-
-
-The smart AI fills the nutrition filter for you.
-![Auto filled bar](images/image-15.png)
-
 ## ✨ New Functions 
-CookBook has been upgraded with exciting new features to make your cooking experience smarter, more interactive, and hassle-free! Below are the highlights of the latest functionalities added:
-### 🎤 Multiple Voice-Guided Recipes  
-A fresh addition! Choose from multiple voice options to guide you through cooking, enhancing convenience and enabling hands-free operation.  
 
-![Voice-Guided Recipes Screenshot](https://github.com/user-attachments/assets/c24d6cec-9fa9-4aaa-9924-5307d6bfba8b)
+### Improved UI & Login
 
----
-
-### 🖼️ Personalized Themes  
-Make CookBook your own with beautifully designed themes like *Midnight Chef*, *Literary Lemon*, and more. Create the perfect cooking atmosphere tailored to your style.  
-
-![Personalized Themes Screenshot](https://github.com/user-attachments/assets/28d6a098-5512-48b0-b5ba-adc998e97313)
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/1.png)
 
 ---
 
-### 📝 Printable Meal Plans  
-Plan your meals for the week and print them with ease! CookBook helps you stay organized by preparing a clear, printable meal plan to simplify your cooking schedule.  
+### 🖼️ Generating Personalized Meal Plan  
 
-![Printable Meal Plans Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/mealplan.png?raw=true)
-
----
-
-### 🛒 PDF Shopping List Export  
-Easily generate shopping lists from selected recipes and export them as PDFs for offline access and convenience. Save time and never forget an ingredient while shopping!  
-
-![Shopping List Export Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/shopping.png?raw=true)  
+![Personalized Themes Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/2.png)
 
 ---
 
-### 🍝 Advanced Recipe Filters  
-Looking for something quick? Or perhaps you want to try a specific cuisine? Use advanced filters to narrow down recipes by:  
-- Cuisine type  
-- Cooking time  
-- Dietary preferences  
+### 📝 Meal Plan generated in a Calendar View
 
-![Recipe Filters Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/Category_filter.png?raw=true)  
+![Printable Meal Plans Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/3.png)
 
 ---
 
-### 🤝 Social Sharing & Quick Access  
-Share your favorite recipes instantly via Discord, Slack, or other social media platforms. Collaboration in the kitchen has never been easier!  
+### 🛒 Meal Plan Creation using Drag & Drop
 
-![Social Sharing Screenshot](https://github.com/user-attachments/assets/beb3eb82-e251-4f4e-90e7-d0d0b924aa57)
+![Shopping List Export Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/4.png)  
 
-![FAQ Screenshot](https://github.com/user-attachments/assets/df62d5e3-fed0-4946-9b15-b6609aa46698)
+---
+
+### 🍝 Automatic Export of Ingredients to a Shopping List
+
+![Recipe Filters Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/5.png)  
+
+---
+
+### 🤝 User History & Activity based AI created recipes  
+
+![FAQ Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/6.png)
 
 
 ---
 
+### New & Improved Recipe Viewer
 
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/7.png)
 
-## Old Functions
+---
+
+### 🖼️ Interactive Voice Activated Cooking Mode
+
+![Personalized Themes Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/8.png)
+
+---
+
+<!--## Old Functions
 - This is the CookBook HomePage that should automatically open in a browser after executing the command: 'npm start'
   <br><br>
 
@@ -348,6 +339,7 @@ Share your favorite recipes instantly via Discord, Slack, or other social media 
 
 ![case](assets/filterSearch2.png)
 
+<!--
 # Style Checker and Code Fomatter
 
 - IDE and Style Checker: [VSCode](https://code.visualstudio.com/)
@@ -377,18 +369,17 @@ Following extensions have to be added to you VS Code editor:
   }
 }
 
-```
+```-->
 
-# Code Coverage for 5.0
-![code coverage image](images/image-16.png)
-
-# Code Coverage
-[Codecov](https://app.codecov.io/gh/yzhu27/CookBook)
-![civ](assets/codecov.png)
-
-In case of any queries and for additional help, please email us at: help.cookbook@gmail.com
+# Code Coverage for 6.0
+![code coverage image](https://github.com/ncsu-csc-510/Project3/blob/main/media/9.png)
 
 # Meet the Team
+
+## Version 6
+- Aniruddha Kulkarni
+- Anchal Kakadia
+- Aranya Venugopal
 
 ## Version 5
 <center>
@@ -461,7 +452,7 @@ In case of any queries and for additional help, please email us at: help.cookboo
 
 
 
-
+<!--
 # Support
 You can find the dataset used for this project [here](https://drive.google.com/file/d/12CZFb7Ugmiw9zQ7M_qpRsn7pmaV1zW0c/view?usp=sharing)
 ### 📊 Score Card for Version 5
@@ -999,6 +990,7 @@ CookBook
    ├─ .env
    ├─ coverage.xml
    ├─ sliderCollections.tsx
-   └─ test_routes.py
+   └─ test_routes.py 
+   -->
 
 ```

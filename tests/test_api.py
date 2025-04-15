@@ -2,7 +2,7 @@
 # import pytest
 # import time
 
-# BASE_URL = "http://localhost:8000/recipe"
+# BASE_URL = "http://localhost:8000/recipes"
 
 # def test_list_recipes():
 #     """Test retrieving a list of recipes."""

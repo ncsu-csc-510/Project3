@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./Profile.css";
+import { Grid } from "@mui/material";
 
 interface ProfileData {
   name: string;
@@ -85,10 +86,24 @@ const Profile: React.FC = () => {
       });
       
       // Update with any additional data from the backend
-      setUserData(prev => ({
-        ...prev,
-        ...response.data
-      }));
+      if (response.data) {
+        // Ensure numeric fields are properly converted
+        const profileData = {
+          ...response.data,
+          age: Number(response.data.age) || 0,
+          weight: Number(response.data.weight) || 0,
+          height: Number(response.data.height) || 0,
+          goalWeight: Number(response.data.goalWeight) || 0,
+          dietaryRestrictions: Array.isArray(response.data.dietaryRestrictions) 
+            ? response.data.dietaryRestrictions 
+            : []
+        };
+        
+        setUserData(prev => ({
+          ...prev,
+          ...profileData
+        }));
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
@@ -166,164 +181,177 @@ const Profile: React.FC = () => {
     <div className="profile-container">
       <h2>Your Profile</h2>
 
-      {/* Display user details */}
-      <div className="profile-details">
-        <div className="form-group">
-          <label htmlFor="name">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={userData.name}
-            onChange={handleInputChange}
-            className="form-control"
-            readOnly
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={userData.email}
-            onChange={handleInputChange}
-            className="form-control"
-            readOnly
-          />
-        </div>
-      </div>
+      <Grid container spacing={4}>
+        {/* Left Column */}
+        <Grid item xs={12} md={6}>
+          {/* Basic Information */}
+          <div className="profile-section">
+            <h3>Basic Information</h3>
+            <div className="profile-details">
+              <div className="form-group">
+                <label htmlFor="name">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={userData.name}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  readOnly
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="email">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={userData.email}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  readOnly
+                />
+              </div>
+            </div>
 
-      <h3>Personal Information</h3>
-      
-      <div className="form-row">
-        <div className="form-group">
-          <label htmlFor="age">Age</label>
-          <input
-            type="number"
-            id="age"
-            name="age"
-            value={userData.age}
-            onChange={handleInputChange}
-            className="form-control"
-            min="1"
-            max="120"
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="weight">Weight (kg)</label>
-          <input
-            type="number"
-            id="weight"
-            name="weight"
-            value={userData.weight}
-            onChange={handleInputChange}
-            className="form-control"
-            min="20"
-            max="300"
-            step="0.1"
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="height">Height (cm)</label>
-          <input
-            type="number"
-            id="height"
-            name="height"
-            value={userData.height}
-            onChange={handleInputChange}
-            className="form-control"
-            min="100"
-            max="250"
-          />
-        </div>
-      </div>
-      
-      <div className="form-group">
-        <label htmlFor="activityLevel">Activity Level</label>
-        <select
-          id="activityLevel"
-          name="activityLevel"
-          value={userData.activityLevel}
-          onChange={handleInputChange}
-          className="form-control"
-        >
-          {activityLevels.map(level => (
-            <option key={level.value} value={level.value}>
-              {level.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      
-      <div className="form-group">
-        <label htmlFor="goal">Goal</label>
-        <select
-          id="goal"
-          name="goal"
-          value={userData.goal}
-          onChange={handleInputChange}
-          className="form-control"
-        >
-          {goalOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      
-      {userData.goal !== "maintain" && (
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="goalWeight">Goal Weight (kg)</label>
-            <input
-              type="number"
-              id="goalWeight"
-              name="goalWeight"
-              value={userData.goalWeight}
-              onChange={handleInputChange}
-              className="form-control"
-              min="20"
-              max="300"
-              step="0.1"
-            />
+            {/* Personal Information */}
+            <h3>Personal Information</h3>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="age">Age</label>
+                <input
+                  type="number"
+                  id="age"
+                  name="age"
+                  value={userData.age}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  min="1"
+                  max="120"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="weight">Weight (kg)</label>
+                <input
+                  type="number"
+                  id="weight"
+                  name="weight"
+                  value={userData.weight}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  min="20"
+                  max="300"
+                  step="0.1"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="height">Height (cm)</label>
+                <input
+                  type="number"
+                  id="height"
+                  name="height"
+                  value={userData.height}
+                  onChange={handleInputChange}
+                  className="form-control"
+                  min="100"
+                  max="250"
+                />
+              </div>
+            </div>
           </div>
-          
-          <div className="form-group">
-            <label htmlFor="targetDate">Target Date</label>
-            <input
-              type="date"
-              id="targetDate"
-              name="targetDate"
-              value={userData.targetDate}
-              onChange={handleInputChange}
-              className="form-control"
-            />
+        </Grid>
+
+        {/* Right Column */}
+        <Grid item xs={12} md={6}>
+          <div className="profile-section">
+            <h3>Fitness Goals</h3>
+            <div className="form-group">
+              <label htmlFor="activityLevel">Activity Level</label>
+              <select
+                id="activityLevel"
+                name="activityLevel"
+                value={userData.activityLevel}
+                onChange={handleInputChange}
+                className="form-control"
+              >
+                {activityLevels.map(level => (
+                  <option key={level.value} value={level.value}>
+                    {level.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="goal">Goal</label>
+              <select
+                id="goal"
+                name="goal"
+                value={userData.goal}
+                onChange={handleInputChange}
+                className="form-control"
+              >
+                {goalOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {userData.goal !== "maintain" && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="goalWeight">Goal Weight (kg)</label>
+                  <input
+                    type="number"
+                    id="goalWeight"
+                    name="goalWeight"
+                    value={userData.goalWeight}
+                    onChange={handleInputChange}
+                    className="form-control"
+                    min="20"
+                    max="300"
+                    step="0.1"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="targetDate">Target Date</label>
+                  <input
+                    type="date"
+                    id="targetDate"
+                    name="targetDate"
+                    value={userData.targetDate}
+                    onChange={handleInputChange}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+            )}
+
+            <h3>Dietary Preferences</h3>
+            <div className="dietary-restrictions">
+              {dietaryOptions.map(option => (
+                <div key={option} className="checkbox-group">
+                  <input
+                    type="checkbox"
+                    id={`dietary-${option}`}
+                    value={option}
+                    checked={userData.dietaryRestrictions?.includes(option) || false}
+                    onChange={handleCheckboxChange}
+                  />
+                  <label htmlFor={`dietary-${option}`}>{option}</label>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      
-      <h3>Dietary Preferences</h3>
-      
-      <div className="dietary-restrictions">
-        {dietaryOptions.map(option => (
-          <div key={option} className="checkbox-group">
-            <input
-              type="checkbox"
-              id={`dietary-${option}`}
-              value={option}
-              checked={userData.dietaryRestrictions?.includes(option) || false}
-              onChange={handleCheckboxChange}
-            />
-            <label htmlFor={`dietary-${option}`}>{option}</label>
-          </div>
-        ))}
-      </div>
-      
+        </Grid>
+      </Grid>
+
       {message && (
         <div className={`message ${message.includes("successfully") ? "success" : "error"}`}>
           {message.includes("successfully") ? (
