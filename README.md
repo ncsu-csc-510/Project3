@@ -231,58 +231,57 @@ To set up the front end React app, do:
    npm start
 
 ## ✨ New Functions 
-CookBook has been upgraded with exciting new features to make your cooking experience smarter, more interactive, and hassle-free! Below are the highlights of the latest functionalities added:
-### 🎤 Multiple Voice-Guided Recipes  
-A fresh addition! Choose from multiple voice options to guide you through cooking, enhancing convenience and enabling hands-free operation.  
 
-![Voice-Guided Recipes Screenshot](https://github.com/user-attachments/assets/c24d6cec-9fa9-4aaa-9924-5307d6bfba8b)
+### Improved UI & Login
 
----
-
-### 🖼️ Personalized Themes  
-Make CookBook your own with beautifully designed themes like *Midnight Chef*, *Literary Lemon*, and more. Create the perfect cooking atmosphere tailored to your style.  
-
-![Personalized Themes Screenshot](https://github.com/user-attachments/assets/28d6a098-5512-48b0-b5ba-adc998e97313)
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/1.png)
 
 ---
 
-### 📝 Printable Meal Plans  
-Plan your meals for the week and print them with ease! CookBook helps you stay organized by preparing a clear, printable meal plan to simplify your cooking schedule.  
+### 🖼️ Generating Personalized Meal Plan  
 
-![Printable Meal Plans Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/mealplan.png?raw=true)
-
----
-
-### 🛒 PDF Shopping List Export  
-Easily generate shopping lists from selected recipes and export them as PDFs for offline access and convenience. Save time and never forget an ingredient while shopping!  
-
-![Shopping List Export Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/shopping.png?raw=true)  
+![Personalized Themes Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/2.png)
 
 ---
 
-### 🍝 Advanced Recipe Filters  
-Looking for something quick? Or perhaps you want to try a specific cuisine? Use advanced filters to narrow down recipes by:  
-- Cuisine type  
-- Cooking time  
-- Dietary preferences  
+### 📝 Meal Plan generated in a Calendar View
 
-![Recipe Filters Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/Category_filter.png?raw=true)  
+![Printable Meal Plans Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/3.png)
 
 ---
 
-### 🤝 Social Sharing & Quick Access  
-Share your favorite recipes instantly via Discord, Slack, or other social media platforms. Collaboration in the kitchen has never been easier!  
+### 🛒 Meal Plan Creation using Drag & Drop
 
-![Social Sharing Screenshot](https://github.com/user-attachments/assets/beb3eb82-e251-4f4e-90e7-d0d0b924aa57)
+![Shopping List Export Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/4.png)  
 
-![FAQ Screenshot](https://github.com/user-attachments/assets/df62d5e3-fed0-4946-9b15-b6609aa46698)
+---
+
+### 🍝 Automatic Export of Ingredients to a Shopping List
+
+![Recipe Filters Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/5.png)  
+
+---
+
+### 🤝 User History & Activity based AI created recipes  
+
+![FAQ Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/6.png)
 
 
 ---
 
+### New & Improved Recipe Viewer
 
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/7.png)
 
-## Old Functions
+---
+
+### 🖼️ Interactive Voice Activated Cooking Mode
+
+![Personalized Themes Screenshot](https://github.com/ncsu-csc-510/Project3/blob/main/media/8.png)
+
+---
+
+<!--## Old Functions
 - This is the CookBook HomePage that should automatically open in a browser after executing the command: 'npm start'
   <br><br>
 
@@ -373,13 +372,7 @@ Following extensions have to be added to you VS Code editor:
 ```-->
 
 # Code Coverage for 6.0
-![code coverage image](images/image-16.png)
-
-# Code Coverage
-[Codecov](https://app.codecov.io/gh/yzhu27/CookBook)
-![civ](assets/codecov.png)
-
-In case of any queries and for additional help, please email us at: help.cookbook@gmail.com
+![code coverage image](https://github.com/ncsu-csc-510/Project3/blob/main/media/9.png)
 
 # Meet the Team
 
