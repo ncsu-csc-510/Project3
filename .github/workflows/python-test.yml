@@ -14,12 +14,6 @@ jobs:
     environment: api
     timeout-minutes: 15  # Add timeout for the entire job
 
-    services:
-      mongodb:
-        image: mongo:4.4
-        ports:
-          - 27017:27017
-
     env:  # Global environment variables
       ATLAS_URI: "mongodb://localhost:27017"
       DB_NAME: "cookbook_test"
@@ -36,7 +30,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
+         
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
@@ -48,7 +42,7 @@ jobs:
     - name: Install dependencies for testing
       run: |
         python -m pip install --upgrade pip
-        pip install coverage pytest pytest-xdist pytest-timeout fastapi
+        pip install coverage pytest pytest-xdist pytest-timeout fastapi pytest-mock
 
     - name: Install API dependencies
       working-directory: ./api
@@ -60,67 +54,178 @@ jobs:
         cat > patch_mongodb.py << 'EOL'
         import sys
         import os
-        from unittest.mock import patch, MagicMock
-        import motor.motor_asyncio
-        from bson import ObjectId
-
-        # Create a mock database
-        class MockDatabase(dict):
-            async def list_collection_names(self):
-                return ["users", "recipes", "meal-plans", "shopping-list"]
+        import builtins
+        import importlib.util
+        from unittest.mock import MagicMock, patch
+        
+        # Create our mocks first
+        class AsyncMock(MagicMock):
+            async def __call__(self, *args, **kwargs):
+                return super(AsyncMock, self).__call__(*args, **kwargs)
             
-            def __getitem__(self, key):
-                if key not in self:
-                    self[key] = MockCollection()
-                return super().__getitem__(key)
+            def __await__(self):
+                return self().__await__()
+
+        class AsyncIterator:
+            def __init__(self, seq):
+                self.iter = iter(seq)
+            
+            def __aiter__(self):
+                return self
+            
+            async def __anext__(self):
+                try:
+                    return next(self.iter)
+                except StopIteration:
+                    raise StopAsyncIteration
 
         class MockCollection:
+            def __init__(self, name="test_collection"):
+                self.name = name
+                
             async def find_one(self, *args, **kwargs):
+                if self.name == "users":
+                    return {
+                        "_id": "user_id_123",
+                        "email": "test@example.com",
+                        "name": "Test User",
+                        "profilePhoto": "default.jpg"
+                    }
                 return None
-                
-            async def insert_one(self, *args, **kwargs):
-                return MagicMock(inserted_id=ObjectId())
-                
+            
             def find(self, *args, **kwargs):
-                cursor = MagicMock()
-                cursor.__aiter__.return_value = []
-                return cursor
+                mock_cursor = MagicMock()
                 
+                # Mock async iterator functionality
+                if self.name == "recipes":
+                    mock_data = [
+                        {"_id": "recipe1", "name": "Test Recipe 1"},
+                        {"_id": "recipe2", "name": "Test Recipe 2"}
+                    ]
+                else:
+                    mock_data = []
+                
+                mock_cursor.__aiter__ = lambda: AsyncIterator(mock_data)
+                mock_cursor.sort = lambda *args, **kwargs: mock_cursor
+                mock_cursor.skip = lambda *args, **kwargs: mock_cursor
+                mock_cursor.limit = lambda *args, **kwargs: mock_cursor
+                return mock_cursor
+            
+            async def insert_one(self, *args, **kwargs):
+                result = MagicMock()
+                result.inserted_id = "mock_id_123"
+                return result
+            
             async def count_documents(self, *args, **kwargs):
                 return 0
+            
+            async def update_one(self, *args, **kwargs):
+                result = MagicMock()
+                result.modified_count = 1
+                return result
+            
+            async def delete_one(self, *args, **kwargs):
+                result = MagicMock()
+                result.deleted_count = 1
+                return result
+                
+            def aggregate(self, *args, **kwargs):
+                mock_cursor = MagicMock()
+                mock_cursor.__aiter__ = lambda: AsyncIterator([])
+                return mock_cursor
 
-        # Create a mock client class
+        class MockDatabase:
+            def __init__(self, *args, **kwargs):
+                self._collections = {}
+            
+            def __getitem__(self, name):
+                if name not in self._collections:
+                    self._collections[name] = MockCollection(name)
+                return self._collections[name]
+                
+            async def list_collection_names(self):
+                return ["users", "recipes", "meal-plans", "shopping-list"]
+
         class MockMotorClient:
             def __init__(self, *args, **kwargs):
-                self.db = MockDatabase()
-                
+                # Ignore any connection parameters
+                pass
+            
             def __getitem__(self, name):
-                return self.db
+                return MockDatabase()
+            
+            def get_database(self, *args, **kwargs):
+                return MockDatabase()
                 
             def close(self):
                 pass
 
-        # Patch MongoDB client
-        original_client = motor.motor_asyncio.AsyncIOMotorClient
-        motor.motor_asyncio.AsyncIOMotorClient = MockMotorClient
+        # Now let's patch at the deepest level possible
+        
+        # Step 1: Replace the import mechanism itself to intercept motor imports
+        real_import = builtins.__import__
 
-        print("Successfully patched MongoDB client for testing!")
+        def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == 'motor.motor_asyncio' or name.startswith('motor.'):
+                # If the motor module is being imported, we need to patch it
+                if name == 'motor.motor_asyncio':
+                    # Create a mock module
+                    mock_module = type(sys)(name)
+                    mock_module.AsyncIOMotorClient = MockMotorClient
+                    return mock_module
+            return real_import(name, globals, locals, fromlist, level)
+
+        builtins.__import__ = mock_import
+
+        # Step 2: Also patch the existing motor module if it's already imported
+        if 'motor.motor_asyncio' in sys.modules:
+            sys.modules['motor.motor_asyncio'].AsyncIOMotorClient = MockMotorClient
+
+        # Step 3: Apply specific patches for certain modules
+        import types
+        
+        # Create a mock module for pymongo
+        if 'pymongo' not in sys.modules:
+            pymongo_mock = types.ModuleType('pymongo')
+            pymongo_mock.errors = types.ModuleType('pymongo.errors')
+            pymongo_mock.errors.ConnectionFailure = Exception
+            pymongo_mock.errors.ServerSelectionTimeoutError = Exception
+            pymongo_mock.errors.ConfigurationError = Exception
+            sys.modules['pymongo'] = pymongo_mock
+            sys.modules['pymongo.errors'] = pymongo_mock.errors
+
+        print("MongoDB client successfully patched for testing!")
+        EOL
+
+    - name: Create conftest.py for pytest
+      run: |
+        cat > conftest.py << 'EOL'
+        import pytest
+        import sys
+        import os
+        import patch_mongodb  # Import our patch
+
+        # Add a fixture to patch app startup
+        @pytest.fixture(autouse=True)
+        def mock_startup(monkeypatch):
+            # Add any additional patching needed for tests
+            pass
         EOL
 
     - name: List installed packages
       run: pip list
-      
+       
     - name: Show test directory structure
       run: find ./tests_akulka24 -type f | sort
 
     - name: Run tests with patched MongoDB
       run: |
-        python -c "import patch_mongodb" && python -m pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
+        PYTHONPATH=$PWD pytest ./tests_akulka24/ -v --showlocals --no-header --timeout=60
 
     - name: Run coverage
       if: always()  # Run even if tests fail
       run: |
-        python -c "import patch_mongodb" && coverage run -m pytest ./tests_akulka24/
+        PYTHONPATH=$PWD coverage run -m pytest ./tests_akulka24/
         coverage report -m
 
     - name: Upload coverage report
