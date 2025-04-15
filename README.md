@@ -1,18 +1,17 @@
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/ncsugroup17/my-cookbook/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ncsugroup17/my-cookbook/actions/workflows/build.yml)
+[![Build Status](https://github.com/ncsu-csc-510/Project3/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ncsu-csc-510/Project3/actions/workflows/build.yml)
 [![DOI](https://zenodo.org/badge/888533527.svg)](https://doi.org/10.5281/zenodo.14200973)
-[![Repository size](https://img.shields.io/github/repo-size/ncsugroup17/my-cookbook)](https://github.com/ncsugroup17/my-cookbook)
+[![Repository size](https://img.shields.io/github/repo-size/ncsu-csc-510/Project3)](https://github.com/ncsu-csc-510/Project3)
 
-![Open Issues](https://img.shields.io/github/issues/ncsugroup17/my-cookbook)
-![Closed Issues](https://img.shields.io/github/issues-closed/ncsugroup17/my-cookbook)
-![Open Pull Requests](https://img.shields.io/github/issues-pr/ncsugroup17/my-cookbook)
-![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/ncsugroup17/my-cookbook)
+![Open Issues](https://img.shields.io/github/issues/ncsu-csc-510/Project3)
+![Closed Issues](https://img.shields.io/github/issues-closed/ncsu-csc-510/Project3)
+![Open Pull Requests](https://img.shields.io/github/issues-pr/ncsu-csc-510/Project3)
+![Closed Pull Requests](https://img.shields.io/github/issues-pr-closed/ncsu-csc-510/Project3)
 
-![AutoPEP8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/autopep8.yml/badge.svg)
-![Flake8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/flake8.yml/badge.svg)
+![AutoPEP8 Workflow](https://github.com/ncsu-csc-510/Project3/actions/workflows/autopep8.yml/badge.svg)
+![Flake8 Workflow](https://github.com/ncsu-csc-510/Project3/actions/workflows/flake8.yml/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/ncsu-csc-510/Project3/badge.svg)](https://coveralls.io/github/ncsu-csc-510/Project3)
 
 
@@ -30,12 +29,7 @@
   />
 </a>
 
-[![Join the Discord Server](https://img.shields.io/badge/Join%20the%20Discord%20Server-7289DA?style=flat&logo=discord&logoColor=white)](https://discord.gg/jqCNWqET)
-
-</div>
-<br><br>
-
-<br><br>
+<!--[![Join the Discord Server](https://img.shields.io/badge/Join%20the%20Discord%20Server-7289DA?style=flat&logo=discord&logoColor=white)](https://discord.gg/jqCNWqET) -->
 
 # 🍳 What is CookBook?  
 
