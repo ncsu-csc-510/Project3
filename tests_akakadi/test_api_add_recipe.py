@@ -1,62 +1,17 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../api')))
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 import pytest
-from bson import ObjectId
+from bson import ObjectId  
 from main import app
-
-# Add a patch for the route handler before importing app
-@pytest.fixture(scope="module", autouse=True)
-def patch_routes():
-    """Patch the recipe addition routes to work with our MongoDB mock"""
-    from fastapi import APIRouter, Request, HTTPException, Body
-    from typing import List, Dict, Any
-    
-    # Create a router for recipe endpoints
-    router = APIRouter()
-    
-    @router.post("/recipe/add-recipe/", status_code=201)
-    async def add_recipe(request: Request, recipe: Dict[str, Any] = Body(...)):
-        """Add a new recipe endpoint"""
-        # Validate required fields
-        if not recipe.get("name") or not recipe.get("instructions"):
-            raise HTTPException(status_code=400, detail="Required fields missing")
-            
-        # Check instructions list is not empty
-        if len(recipe.get("instructions", [])) == 0:
-            raise HTTPException(status_code=400, detail="Missing required fields: instructions")
-            
-        # More field validations
-        if not recipe.get("servings"):
-            raise HTTPException(status_code=400, detail="Required fields missing")
-            
-        # Insert the recipe
-        result = await request.app.database["recipes"].insert_one(recipe)
-        
-        # Get the inserted recipe
-        created_recipe = await request.app.database["recipes"].find_one({"_id": result.inserted_id})
-        
-        return created_recipe
-        
-    # Make the router available
-    try:
-        if not hasattr(app, "recipe_add_router"):
-            app.recipe_add_router = router
-            app.include_router(router)
-    except:
-        pass
 
 @pytest.fixture
 def setup_db():
     """Fixture to mock the database and avoid actual database calls."""
-    from motor.motor_asyncio import AsyncIOMotorClient
-    
-    # Create a real mock database using our MongoDB mock
-    app.mongodb_client = AsyncIOMotorClient()
-    app.database = app.mongodb_client["cookbook_test"]
-    
+    app.database = MagicMock()
+    app.database["recipes"].insert_one.return_value.inserted_id = ObjectId()  # Mock insert
     yield app.database
 
 def test_add_recipe_success(setup_db):

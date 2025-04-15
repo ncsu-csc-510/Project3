@@ -1,108 +1,21 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../api')))
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 import pytest
-from bson import ObjectId
+from bson import ObjectId  
 from main import app
-
-# Add a patch for the route handler before importing app
-@pytest.fixture(scope="module", autouse=True)
-def patch_routes():
-    """Patch the shopping list routes to work with our MongoDB mock"""
-    from fastapi import APIRouter, Request, HTTPException, Body
-    from typing import List, Dict, Any
-    
-    # Create a router for shopping list endpoints
-    router = APIRouter()
-    
-    @router.post("/shopping-list/update")
-    async def update_shopping_list(request: Request, items: List[Dict[str, Any]] = Body(...)):
-        """Update the shopping list with new items"""
-        # Get the existing items
-        existing_items = await request.app.database["shopping-list"].find({}).to_list(length=None)
-        
-        # Check if any of the new items are duplicates
-        new_items = []
-        for item in items:
-            if not any(e["name"] == item["name"] for e in existing_items):
-                new_items.append(item)
-        
-        if not new_items:
-            raise HTTPException(status_code=400, detail="No new items to add.")
-            
-        # Insert the new items
-        await request.app.database["shopping-list"].insert_many(new_items)
-        return {"message": "Shopping list updated successfully"}
-    
-    @router.put("/shopping-list/{item_id}")
-    async def update_item(item_id: str, item: Dict[str, Any], request: Request):
-        """Update a shopping list item"""
-        result = await request.app.database["shopping-list"].update_one(
-            {"_id": ObjectId(item_id)},
-            {"$set": item}
-        )
-        
-        if result.modified_count == 0:
-            return {"message": "Item not found or not modified"}
-            
-        return {"message": "Item updated successfully"}
-        
-    @router.delete("/shopping-list/{item_id}")
-    async def delete_item(item_id: str, request: Request):
-        """Delete a shopping list item"""
-        result = await request.app.database["shopping-list"].delete_one(
-            {"_id": ObjectId(item_id)}
-        )
-        
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Item not found")
-            
-        return {"message": f"Item with ID {item_id} deleted successfully"}
-        
-    @router.post("/add-recipe/")
-    async def add_recipe(request: Request, recipe: Dict[str, Any] = Body(...)):
-        """Add a new recipe"""
-        # Validate required fields
-        if not recipe.get("name") or not recipe.get("instructions"):
-            raise HTTPException(status_code=400, detail="Required fields missing")
-            
-        # Insert the recipe
-        result = await request.app.database["recipes"].insert_one(recipe)
-        
-        # Get the inserted recipe
-        created_recipe = await request.app.database["recipes"].find_one({"_id": result.inserted_id})
-        
-        return created_recipe, 201
-        
-    # Make the router available
-    try:
-        if not hasattr(app, "shopping_list_router"):
-            app.shopping_list_router = router
-            app.include_router(router)
-    except:
-        pass
 
 @pytest.fixture
 def setup_db():
     """Fixture to mock the database and avoid actual database calls."""
-    from motor.motor_asyncio import AsyncIOMotorClient
-    
-    # Create a real mock database using our MongoDB mock
-    app.mongodb_client = AsyncIOMotorClient()
-    app.database = app.mongodb_client["cookbook_test"]
-    
-    # Add some shopping list data
-    app.database["shopping-list"].insert_one({
-        "_id": ObjectId("60b8d2950d0a2c8b75a3b9f9"),
-        "name": "Apple", 
-        "quantity": 5, 
-        "unit": "kg", 
-        "checked": False
-    })
-    
-    yield app.database
+    # Mocking the database
+    app.database = MagicMock()
+    app.database.list_collection_names.return_value = []  # Mock empty collection
+    app.database["shopping-list"].find.return_value = []  # Mock empty shopping list
+    app.database["shopping-list"].insert_many.return_value = None  # Mock insert
+    yield app.database  # Use the mock database in tests
 
 def test_update_shopping_list(setup_db):
     """Test to update shopping list."""

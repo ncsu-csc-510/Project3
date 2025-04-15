@@ -1,122 +1,17 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../api')))
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 import pytest
 from main import app
 from bson import ObjectId
 
-# Add a patch for the route handler before importing app
-@pytest.fixture(scope="module", autouse=True)
-def patch_routes():
-    """Patch the meal plan routes to work with our MongoDB mock"""
-    from fastapi import APIRouter, Request
-    
-    # Create a router for meal plan endpoints
-    router = APIRouter()
-    
-    @router.post("/meal-plan/")
-    async def save_meal_plan(request: Request):
-        data = await request.json()
-        day = data.get("day")
-        recipe = data.get("recipe")
-        
-        try:
-            result = await request.app.database["meal-plans"].update_one(
-                {"day": day},
-                {"$set": {"recipe": recipe}},
-                upsert=True
-            )
-            return {"message": "Meal plan saved successfully."}
-        except Exception as e:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=500, detail="An error occurred while saving the meal plan.")
-    
-    @router.get("/meal-plan/")
-    async def get_meal_plan(request: Request):
-        try:
-            meal_plans = await request.app.database["meal-plans"].find({}).to_list(length=None)
-            
-            result = []
-            for plan in meal_plans:
-                result.append(plan)
-                
-            for i in range(7):
-                if not any(plan.get("day") == i for plan in meal_plans):
-                    result.append({str(i): None})
-                    
-            return result
-        except Exception as e:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=500, detail="An error occurred while retrieving the meal plan.")
-    
-    @router.get("/search2/{ingredient},{calories_low},{calories_up}")
-    async def search_by_ingredient_and_calories(
-        ingredient: str, 
-        calories_low: int, 
-        calories_up: int,
-        request: Request
-    ):
-        recipes = await request.app.database["recipes"].find(
-            {"ingredients": {"$in": [ingredient.lower()]}}
-        ).to_list(length=None)
-        
-        # Filter by calorie range
-        filtered_recipes = [r for r in recipes if calories_low <= float(r.get("calories", 0)) <= calories_up]
-        
-        # Sort by calories (ascending)
-        filtered_recipes.sort(key=lambda x: float(x.get("calories", 0)))
-        
-        return filtered_recipes
-        
-    # Make the router available
-    try:
-        if not hasattr(app, "meal_plan_router"):
-            app.meal_plan_router = router
-            app.include_router(router)
-    except:
-        pass
 
 @pytest.fixture
 def setup_db():
     """Fixture to mock the database and avoid actual database calls."""
-    from motor.motor_asyncio import AsyncIOMotorClient
-    
-    # Create a real mock database using our MongoDB mock
-    app.mongodb_client = AsyncIOMotorClient()
-    app.database = app.mongodb_client["cookbook_test"]
-    
-    # Ensure we have meal plan data
-    app.database["meal-plans"].update_one(
-        {"day": 0},
-        {"$set": {"recipe": {"name": "Pasta", "calories": "500"}}},
-        upsert=True
-    )
-    
-    app.database["meal-plans"].update_one(
-        {"day": 1},
-        {"$set": {"recipe": {"name": "Salad", "calories": "300"}}},
-        upsert=True
-    )
-    
-    # Add some recipe data for search tests
-    app.database["recipes"].insert_one({
-        "_id": "recipe1",
-        "name": "Grilled Chicken",
-        "ingredients": ["chicken"],
-        "calories": "300",
-        "instructions": ["Step 1"]
-    })
-    
-    app.database["recipes"].insert_one({
-        "_id": "recipe2",
-        "name": "Chicken Salad",
-        "ingredients": ["chicken", "lettuce"],
-        "calories": "200",
-        "instructions": ["Step 1"]
-    })
-    
+    app.database = MagicMock()
     yield app.database
 
 def test_save_meal_plan_success(setup_db):

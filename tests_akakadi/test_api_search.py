@@ -1,92 +1,27 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../api')))
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from bson import ObjectId
 import pytest
 from main import app
 
-# Add a patch for the route handler before importing app
-@pytest.fixture(scope="module", autouse=True)
-def patch_routes():
-    """Patch the recipe search routes to work with our MongoDB mock"""
-    from fastapi import APIRouter, Request
-    
-    # Create a router for recipe search endpoints
-    router = APIRouter()
-    
-    @router.get("/recipe/search/{ingredient}")
-    async def search_recipes_by_ingredient(ingredient: str, request: Request):
-        recipes = await request.app.database["recipes"].find(
-            {"ingredients": {"$in": [ingredient]}}
-        ).to_list(length=None)
-        return recipes
-        
-    @router.post("/recipe/search/")
-    async def search_recipes_by_multiple_ingredients(request: Request):
-        data = await request.json()
-        ingredients = data.get("ingredients", [])
-        page = data.get("page", 1)
-        
-        recipes = await request.app.database["recipes"].find(
-            {"ingredients": {"$in": ingredients}}
-        ).to_list(length=None)
-        
-        count = await request.app.database["recipes"].count_documents(
-            {"ingredients": {"$in": ingredients}}
-        )
-        
-        return {
-            "recipes": recipes,
-            "page": page,
-            "count": count
-        }
-        
-    # Make the router available
-    try:
-        if not hasattr(app, "recipe_router"):
-            app.recipe_router = router
-            app.include_router(router)
-    except:
-        pass
-
 @pytest.fixture
 def setup_db():
     """Fixture to mock the database and cursor behavior."""
-    from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-    
-    # Create a real mock database using our MongoDB mock
-    app.mongodb_client = AsyncIOMotorClient()
-    app.database = app.mongodb_client["cookbook_test"]
-    
-    # Ensure the recipes collection exists and has some test data
-    app.database["recipes"].insert_one({
-        "_id": "recipe1",
-        "name": "Test Recipe 1",
-        "ingredients": ["chocolate", "sugar", "flour"],
-        "instructions": ["Step 1", "Step 2"],
-        "cookTime": "30 minutes",
-        "prepTime": "15 minutes",
-        "servings": 4,
-        "calories": "350",
-        "category": "Dessert",
-        "public": True
-    })
-    
-    app.database["recipes"].insert_one({
-        "_id": "recipe2",
-        "name": "Test Recipe 2",
-        "ingredients": ["garlic", "olive oil", "pasta"],
-        "instructions": ["Step 1", "Step 2"],
-        "cookTime": "20 minutes",
-        "prepTime": "10 minutes",
-        "servings": 2,
-        "calories": "450",
-        "category": "Main",
-        "public": True
-    })
-    
+    app.database = MagicMock()
+    mock_collection = MagicMock()
+    app.database.__getitem__.return_value = mock_collection
+
+    mock_cursor = MagicMock()
+    mock_cursor.limit.return_value = mock_cursor
+    mock_cursor.sort.return_value = mock_cursor
+    mock_cursor.skip.return_value = mock_cursor
+    mock_cursor.__iter__.return_value = iter([])
+
+    mock_collection.find.return_value = mock_cursor
+    mock_collection.count_documents.return_value = 0
     yield app.database
 
 
