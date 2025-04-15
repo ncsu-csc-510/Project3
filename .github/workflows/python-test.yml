@@ -13,9 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: api
 
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
     env:  # Global environment variables
-      ATLAS_URI: ${{ secrets.ATLAS_URI_VALUE }}
-      DB_NAME: "cookbook"
+      ATLAS_URI: "mongodb://localhost:27017"
+      DB_NAME: "cookbook_test"
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY_VALUE }}
       PORT: "8000"
 
