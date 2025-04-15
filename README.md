@@ -13,7 +13,7 @@
 
 ![AutoPEP8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/autopep8.yml/badge.svg)
 ![Flake8 Workflow](https://github.com/ncsugroup17/my-cookbook/actions/workflows/flake8.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/ncsugroup17/my-cookbook/badge.svg?branch=main)](https://coveralls.io/github/ncsugroup17/my-cookbook?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/ncsu-csc-510/Project3/badge.svg)](https://coveralls.io/github/ncsu-csc-510/Project3)
 
 
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
