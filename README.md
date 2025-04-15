@@ -231,23 +231,20 @@ To set up the front end React app, do:
    npm start
 
 ## ✨ New Functions 
-CookBook has been upgraded with exciting new features to make your cooking experience smarter, more interactive, and hassle-free! Below are the highlights of the latest functionalities added:
-### 🎤 Multiple Voice-Guided Recipes  
-A fresh addition! Choose from multiple voice options to guide you through cooking, enhancing convenience and enabling hands-free operation.  
 
-![Voice-Guided Recipes Screenshot](https://github.com/user-attachments/assets/c24d6cec-9fa9-4aaa-9924-5307d6bfba8b)
+### Improved UI & Login
+
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/1.png)
 
 ---
 
-### 🖼️ Personalized Themes  
-Make CookBook your own with beautifully designed themes like *Midnight Chef*, *Literary Lemon*, and more. Create the perfect cooking atmosphere tailored to your style.  
+### 🖼️ Personalized Themes   
 
 ![Personalized Themes Screenshot](https://github.com/user-attachments/assets/28d6a098-5512-48b0-b5ba-adc998e97313)
 
 ---
 
 ### 📝 Printable Meal Plans  
-Plan your meals for the week and print them with ease! CookBook helps you stay organized by preparing a clear, printable meal plan to simplify your cooking schedule.  
 
 ![Printable Meal Plans Screenshot](https://github.com/Software-Engineering-2024-Group/my-cookbook/blob/main/assets/mealplan.png?raw=true)
 
