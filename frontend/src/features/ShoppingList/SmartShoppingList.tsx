@@ -24,12 +24,15 @@ import {
   ListItem,
   ListItemText,
   InputAdornment,
+  Stack,
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import PrintIcon from '@mui/icons-material/Print'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ClearAllIcon from '@mui/icons-material/ClearAll'
+import CloseIcon from '@mui/icons-material/Close'
 import { jsPDF } from 'jspdf'
 import shoppingListImage from './image/shopping-list.jpg'
 import { useTheme } from '../Themes/themeContext'
@@ -81,7 +84,7 @@ const SmartShoppingList: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8000/shopping-list');
+      const response = await axios.get('http://localhost:8000/api/shopping-list');
       console.log('Shopping list response:', response.data); // Debug log
       
       if (response.data && Array.isArray(response.data.shopping_list)) {
@@ -124,7 +127,7 @@ const SmartShoppingList: React.FC = () => {
 
       console.log('Sending item to add:', newShoppingItem); // Debug log
       const response = await axios.post(
-        'http://localhost:8000/shopping-list/update',
+        'http://localhost:8000/api/shopping-list/update',
         [newShoppingItem]
       )
       console.log('Add item response:', response.data); // Debug log
@@ -159,7 +162,7 @@ const SmartShoppingList: React.FC = () => {
 
     try {
       await axios.put(
-        `http://localhost:8000/shopping-list/${itemId}`,
+        `http://localhost:8000/api/shopping-list/${itemId}`,
         updatedItem
       )
 
@@ -173,7 +176,7 @@ const SmartShoppingList: React.FC = () => {
 
   const deleteItem = async (itemId: string) => {
     try {
-      await axios.delete(`http://localhost:8000/shopping-list/${itemId}`)
+      await axios.delete(`http://localhost:8000/api/shopping-list/${itemId}`)
       setListItems((prevItems) =>
         prevItems.filter((item) => item._id !== itemId)
       )
@@ -182,6 +185,35 @@ const SmartShoppingList: React.FC = () => {
       showSnackbar('Error deleting item', 'error')
     }
   }
+
+  const clearAllItems = async () => {
+    if (listItems.length === 0) {
+      showSnackbar('Shopping list is already empty', 'info');
+      return;
+    }
+
+    if (window.confirm('Are you sure you want to delete all items from your shopping list?')) {
+      try {
+        setIsLoading(true);
+        
+        // Delete each item one by one
+        const deletePromises = listItems.map(item => 
+          axios.delete(`http://localhost:8000/api/shopping-list/${item._id}`)
+        );
+        
+        await Promise.all(deletePromises);
+        
+        // Clear the list in the UI
+        setListItems([]);
+        showSnackbar('All items have been removed from your shopping list', 'success');
+      } catch (error) {
+        console.error('Error clearing shopping list:', error);
+        showSnackbar('Error clearing shopping list', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const exportListToPDF = () => {
     const doc = new jsPDF()
@@ -366,21 +398,45 @@ const SmartShoppingList: React.FC = () => {
               <Typography variant="h6" sx={{ color: theme.headerColor }}>
                 Your Shopping List
               </Typography>
-              <Button
-                variant="outlined"
-                onClick={exportListToPDF}
-                startIcon={<PrintIcon />}
-                sx={{
-                  borderColor: theme.headerColor,
-                  color: theme.color,
-                  '&:hover': {
-                    borderColor: theme.color,
-                    backgroundColor: theme.headerColor,
-                  },
-                }}
-              >
-                Export to PDF
-              </Button>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="outlined"
+                  onClick={exportListToPDF}
+                  startIcon={<PrintIcon />}
+                  sx={{
+                    borderColor: theme.headerColor,
+                    color: theme.color,
+                    '&:hover': {
+                      borderColor: theme.color,
+                      backgroundColor: theme.headerColor,
+                    },
+                  }}
+                >
+                  Export to PDF
+                </Button>
+                <Tooltip title="Clear All">
+                  <Button
+                    variant="outlined"
+                    onClick={clearAllItems}
+                    sx={{
+                      borderColor: '#f44336',
+                      color: '#f44336',
+                      minWidth: 'auto',
+                      width: '40px',
+                      height: '40px',
+                      padding: 0,
+                      borderRadius: '50%',
+                      '&:hover': {
+                        backgroundColor: '#f44336',
+                        borderColor: '#f44336',
+                        color: '#fff',
+                      },
+                    }}
+                  >
+                    <CloseIcon />
+                  </Button>
+                </Tooltip>
+              </Stack>
             </Box>
 
             <Divider sx={{ mb: 2, borderColor: theme.headerColor }} />

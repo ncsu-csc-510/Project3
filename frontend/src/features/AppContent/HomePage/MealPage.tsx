@@ -32,6 +32,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import CloseIcon from '@mui/icons-material/Close'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import RestaurantIcon from '@mui/icons-material/Restaurant'
+import ClearAllIcon from '@mui/icons-material/ClearAll'
 import { useTheme } from '../../Themes/themeContext'
 import axios from 'axios'
 import noImage from '../RecipeInformation/no-image.png'
@@ -47,6 +48,7 @@ const MealPage = () => {
   const [openDialog, setOpenDialog] = useState(false)
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState(0)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     const fetchMealPlan = async () => {
@@ -103,7 +105,7 @@ const MealPage = () => {
 
   const handleExportToShoppingList = async () => {
     try {
-      console.log('Starting export to shopping list...');  // Debug log
+      setIsExporting(true);
       // Collect all ingredients from the meal plan
       const ingredients = new Map<string, { quantity: number, unit: string }>();
       
@@ -186,7 +188,7 @@ const MealPage = () => {
 
       // Add to shopping list
       if (shoppingItems.length > 0) {
-        const response = await axios.post('http://localhost:8000/shopping-list/update', shoppingItems);
+        const response = await axios.post('http://localhost:8000/api/shopping-list/update', shoppingItems);
         console.log('Shopping list update response:', response.data);  // Debug log
         
         if (response.data && response.data.shopping_list) {
@@ -200,6 +202,8 @@ const MealPage = () => {
     } catch (error) {
       console.error('Error exporting to shopping list:', error);
       alert('Failed to export ingredients to shopping list. Please try again.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -232,6 +236,30 @@ const MealPage = () => {
       console.error('Error generating meal plan:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearAllMeals = async () => {
+    if (window.confirm('Are you sure you want to clear your entire meal plan?')) {
+      try {
+        setLoading(true);
+        // Delete meal for each day
+        for (let day = 0; day < 7; day++) {
+          if (mealPlan[day]) {
+            await axios.delete(`http://localhost:8000/recipes/meal-plan/${day}`);
+          }
+        }
+        
+        // Reset the meal plan state
+        setMealPlan(Array(7).fill(null));
+        
+        alert('Your meal plan has been cleared successfully.');
+      } catch (error) {
+        console.error('Error clearing meal plan:', error);
+        alert('There was an error clearing your meal plan. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -400,6 +428,30 @@ const MealPage = () => {
             >
               Print
             </Button>
+            <Tooltip title="Clear All">
+              <Button
+                variant="contained"
+                onClick={clearAllMeals}
+                sx={{
+                  backgroundColor: theme.headerColor,
+                  color: theme.color,
+                  minWidth: 'auto',
+                  width: '40px',
+                  height: '40px',
+                  padding: 0,
+                  borderRadius: '50%',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: '#f44336',
+                    color: '#fff',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  },
+                }}
+              >
+                <CloseIcon />
+              </Button>
+            </Tooltip>
           </Stack>
         </Stack>
 

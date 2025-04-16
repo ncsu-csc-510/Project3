@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from 'react-redux'
-import { getRecipeInfoInitiator } from '../RecipeInformation/getRecipeInformation.action'
-import noImage from '../RecipeInformation/no-image.png'
+import { useDispatch } from 'react-redux';
+import { getRecipeInfoInitiator } from '../RecipeInformation/getRecipeInformation.action';
+import noImage from '../RecipeInformation/no-image.png';
+import axios from 'axios';
 import {
   Card,
   CardActionArea,
@@ -17,6 +18,7 @@ import {
   Box,
   Divider,
   Paper,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -38,22 +40,93 @@ type Recipe = {
   instructions: string[];
   images: string[];
   _id: string;
+  recipe_id?: string;
+  url?: string;
 };
 
 const Favorites: React.FC = () => {
   const [favorites, setFavorites] = useState<Recipe[]>([]);
-  const dispatch = useDispatch()
-  const navigateTo = useNavigate()
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch();
+  const navigateTo = useNavigate();
   const { theme } = useTheme();
+  
+  // Get user email from localStorage (set during login)
+  const userEmail = localStorage.getItem("userEmail");
 
   useEffect(() => {
-    const savedFavorites: Recipe[] = JSON.parse(localStorage.getItem("favorites") ?? "[]");
-    setFavorites(savedFavorites);
-  }, []);
+    const fetchFavorites = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        if (userEmail) {
+          // Try to get favorites from API
+          const response = await axios.get(`http://localhost:8000/user/favorites?user_email=${userEmail}`);
+          setFavorites(response.data);
+        } else {
+          // Fall back to localStorage for users who aren't logged in
+          const savedFavorites: Recipe[] = JSON.parse(localStorage.getItem("favorites") ?? "[]");
+          setFavorites(savedFavorites);
+        }
+      } catch (error) {
+        console.error("Error fetching favorites:", error);
+        setError("Failed to load favorites. Using local storage instead.");
+        
+        // Fall back to localStorage if there's an error
+        const savedFavorites: Recipe[] = JSON.parse(localStorage.getItem("favorites") ?? "[]");
+        setFavorites(savedFavorites);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFavorites();
+  }, [userEmail]);
 
-  const gotoRecipe = (id: string) => {
-      dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id))
-      navigateTo('/recipe-details/' + id)
+  const gotoRecipe = (id: string, url?: string) => {
+    if (url) {
+      window.location.href = url;
+    } else {
+      dispatch(getRecipeInfoInitiator('http://localhost:8000/recipes/' + id));
+      navigateTo('/recipe-details/' + id);
+    }
+  };
+  
+  const handleRemoveFavorite = async (recipe: Recipe, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (window.confirm("Are you sure you want to remove this recipe from your favorites?")) {
+      try {
+        if (userEmail) {
+          // Remove from API
+          const recipeId = recipe.recipe_id || recipe._id;
+          await axios.delete(`http://localhost:8000/user/favorites?user_email=${userEmail}&recipe_id=${recipeId}`);
+        }
+        
+        // Also update local state and localStorage for backward compatibility
+        const updatedFavorites = favorites.filter(fav => fav._id !== recipe._id);
+        setFavorites(updatedFavorites);
+        localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      } catch (error) {
+        console.error("Error removing favorite:", error);
+        alert("Failed to remove favorite. Please try again.");
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Container maxWidth="md" sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (error) {
+    // Show error message but continue with localStorage data
+    console.error(error);
   }
 
   if (favorites.length === 0) {
@@ -120,7 +193,7 @@ const Favorites: React.FC = () => {
                 border: `1px solid ${theme.color}20`
               }}
             >
-              <CardActionArea onClick={() => gotoRecipe(recipe._id)}>
+              <CardActionArea onClick={() => gotoRecipe(recipe.recipe_id || recipe._id, recipe.url)}>
                 <CardMedia
                   component="img"
                   height="200"
@@ -203,14 +276,7 @@ const Favorites: React.FC = () => {
                 <IconButton 
                   color="error" 
                   aria-label="remove from favorites" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm("Are you sure you want to remove this recipe from your favorites?")) {
-                      const updatedFavorites = favorites.filter(fav => fav._id !== recipe._id);
-                      setFavorites(updatedFavorites);
-                      localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-                    }
-                  }}
+                  onClick={(e) => handleRemoveFavorite(recipe, e)}
                 >
                   <CloseIcon />
                 </IconButton>

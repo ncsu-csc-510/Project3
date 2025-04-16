@@ -230,9 +230,8 @@ const RecipeList = () => {
     return (
       <Card
         sx={{
-          width: 300,
+          width: '100%',
           height: 300,
-          margin: 'auto',
           backgroundColor: recipe.images?.[0] ? theme.background : theme.headerColor,
           color: theme.color,
           display: 'flex',
@@ -240,6 +239,7 @@ const RecipeList = () => {
           '&:hover': {
             transform: 'scale(1.02)',
             transition: 'transform 0.2s ease-in-out',
+            boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
           },
         }}
       >
@@ -563,14 +563,28 @@ const RecipeList = () => {
       </Box>
       {!loading ? (
         totalCount > 0 ? (
-          (selectedCategory && filtedRecipeList.length > 0
-            ? filtedRecipeList
-            : recipeList
-          ).map((data: any, index: number) => {
-            return (
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',                           // 1 card per row on very small screens
+              sm: 'repeat(2, 1fr)',                // 2 cards per row on small screens
+              md: 'repeat(3, 1fr)',                // 3 cards per row on medium screens
+              lg: 'repeat(4, 1fr)',                // 4 cards per row on large screens
+              xl: 'repeat(5, 1fr)'                 // 5 cards per row on extra large screens
+            },
+            gap: { xs: 2, sm: 3, md: 4 },          // Responsive gap sizes
+            padding: { xs: 1, sm: 2, md: 3 },      // Responsive padding
+            width: '100%',
+            margin: '0 auto',
+            maxWidth: '1800px'                     // Maximum width to prevent stretching on very large screens
+          }}>
+            {(selectedCategory && filtedRecipeList.length > 0
+              ? filtedRecipeList
+              : recipeList
+            ).map((data: any, index: number) => (
               <RecipeCard key={index} recipe={data} />
-            )
-          })
+            ))}
+          </Box>
         ) : (
           <Typography
             variant="h5"

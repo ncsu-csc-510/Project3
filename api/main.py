@@ -92,9 +92,9 @@ async def root():
 
 """ This api functions is for shopping list."""
 
-@app.get("/shopping-list")
-async def get_shopping_list():
-    """Fetches the shopping list from the database or returns an empty list"""
+@app.get("/api/shopping-list")
+async def get_shopping_list_api():
+    """Fetches the shopping list from the database or returns an empty list (API version)"""
     collection_name = "shopping-list"
     collection_names = await app.database.list_collection_names()
     if collection_name not in collection_names:
@@ -109,10 +109,10 @@ async def get_shopping_list():
     return {"shopping_list": shopping_list}
 
 
-@app.post("/shopping-list/update")
-async def update_shopping_list(items: List[ShoppingListItem]):
+@app.post("/api/shopping-list/update")
+async def update_shopping_list_api(items: List[ShoppingListItem]):
     """
-    Extends the shopping list in the database with new items.
+    Extends the shopping list in the database with new items. (API version)
     Ensures no duplicate items are added.
     """
     collection_name = "shopping-list"
@@ -156,10 +156,10 @@ async def update_shopping_list(items: List[ShoppingListItem]):
     return {"message": "Shopping list updated successfully", "shopping_list": updated_list}
 
 
-@app.put("/shopping-list/{item_id}")
-async def update_shopping_list_item(item_id: str, item: ShoppingListItem):
+@app.put("/api/shopping-list/{item_id}")
+async def update_shopping_list_item_api(item_id: str, item: ShoppingListItem):
     """
-    Updates a single item in the shopping list by its ID.
+    Updates a single item in the shopping list by its ID. (API version)
     Ensures the item exists before updating.
     """
     collection_name = "shopping-list"
@@ -193,9 +193,9 @@ async def update_shopping_list_item(item_id: str, item: ShoppingListItem):
     return {"message": "Item updated successfully", "shopping_list_item": updated_item}
 
 
-@app.delete("/shopping-list/{item_id}")
-async def delete_shopping_list_item(item_id: str):
-    """Deletes an item from the shopping list by its ID"""
+@app.delete("/api/shopping-list/{item_id}")
+async def delete_shopping_list_item_api(item_id: str):
+    """Deletes an item from the shopping list by its ID (API version)"""
     collection_name = "shopping-list"
     collection = app.database[collection_name]
 
@@ -208,7 +208,39 @@ async def delete_shopping_list_item(item_id: str):
     return {"message": f"Item with ID {item_id} deleted successfully"}
 
 
-# Shopping list endpoints have been moved to routes.py
+@app.get("/shopping-list")
+async def get_shopping_list():
+    """Fetches the shopping list from the database or returns an empty list"""
+    return await get_shopping_list_api()
+
+
+@app.post("/shopping-list/update")
+async def update_shopping_list(items: List[ShoppingListItem]):
+    """
+    Extends the shopping list in the database with new items.
+    Ensures no duplicate items are added.
+    """
+    return await update_shopping_list_api(items)
+
+
+@app.put("/shopping-list/{item_id}")
+async def update_shopping_list_item(item_id: str, item: ShoppingListItem):
+    """
+    Updates a single item in the shopping list by its ID.
+    Ensures the item exists before updating.
+    """
+    return await update_shopping_list_item_api(item_id, item)
+
+
+@app.delete("/shopping-list/{item_id}")
+async def delete_shopping_list_item(item_id: str):
+    """Deletes an item from the shopping list by its ID"""
+    return await delete_shopping_list_item_api(item_id)
+
+
+# The shopping list endpoints are implemented above and accessible via /shopping-list
+# and shopping-list/* paths directly, as well as via /api/shopping-list/ for the API routes
+# (Previous comment: Shopping list endpoints have been moved to routes.py)
 
 async def get_database():
     """Returns the database connection."""

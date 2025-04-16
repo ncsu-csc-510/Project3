@@ -7,3 +7,10 @@ frontend/shopping_list.pdf
 api/__pycache__/
 tesenv/
 api/.env
+tests_akulka24/__pycache__/
+tests/__pycache__/
+tests_akakadi/__pycache__/
+tests_avenugo3/__pycache__/
+api/.coverage
+api/demo/
+

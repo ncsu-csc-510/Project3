@@ -26,6 +26,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, conint, conlist, PositiveInt, EmailStr, Field
 from dotenv import load_dotenv
 import shutil
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 # Add parent directory to path
 sys.path.insert(0, '../')
@@ -34,7 +36,7 @@ sys.path.insert(0, '../')
 from models import (
     Recipe, RecipeListRequest, RecipeListResponse, RecipeListRequest2,
     RecipeQuery, NutritionQuery, ShoppingListItem, RecipeStep,
-    MealPlanGenerationRequest, User, UserLogin
+    MealPlanGenerationRequest, User, UserLogin, Favorite
 )
 
 # Load environment variables
@@ -1036,3 +1038,132 @@ async def rate_recipe(recipe_id: str, rating_request: RatingRequest, request: Re
     except Exception as e:
         print(f"Error updating rating: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@user_router.post("/favorites", response_description="Add a recipe to favorites", status_code=201)
+async def add_favorite(favorite: Favorite, request: Request):
+    """Add a recipe to user's favorites"""
+    try:
+        print(f"Received favorite data: {favorite}")
+        db = request.app.database
+        
+        # Check if the user exists
+        user = await db.users.find_one({"email": favorite.user_email})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if the recipe is already in favorites
+        existing_favorite = await db.favorites.find_one({
+            "user_email": favorite.user_email, 
+            "recipe_id": favorite.recipe_id
+        })
+        
+        if existing_favorite:
+            # Return the existing favorite without creating a duplicate
+            existing_favorite["_id"] = str(existing_favorite["_id"])
+            return existing_favorite
+        
+        # Add to favorites
+        favorite_dict = favorite.dict()
+        print(f"Saving favorite to database: {favorite_dict}")
+        result = await db.favorites.insert_one(favorite_dict)
+        
+        # Return the created favorite
+        created_favorite = await db.favorites.find_one({"_id": result.inserted_id})
+        created_favorite["_id"] = str(created_favorite["_id"])
+        
+        return created_favorite
+    except RequestValidationError as e:
+        print(f"Validation error: {str(e)}")
+        # Log the error details for debugging
+        for error in e.errors():
+            print(f"Field: {'.'.join(error['loc'])}, Error: {error['msg']}, Type: {error['type']}")
+        raise
+    except Exception as e:
+        print(f"Error adding favorite: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Error adding favorite: {str(e)}")
+
+@user_router.get("/favorites", response_description="Get user's favorites", status_code=200)
+async def get_favorites(user_email: str, request: Request):
+    """Get all favorites for a specific user"""
+    try:
+        db = request.app.database
+        
+        # Check if the user exists
+        user = await db.users.find_one({"email": user_email})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get favorites
+        favorites = []
+        cursor = db.favorites.find({"user_email": user_email})
+        async for favorite in cursor:
+            favorite["_id"] = str(favorite["_id"])
+            favorites.append(favorite)
+        
+        return favorites
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving favorites: {str(e)}")
+
+@user_router.delete("/favorites/{favorite_id}", response_description="Remove a recipe from favorites", status_code=200)
+async def remove_favorite(favorite_id: str, request: Request):
+    """Remove a specific favorite by ID"""
+    try:
+        db = request.app.database
+        
+        # Verify favorite exists
+        existing_favorite = await db.favorites.find_one({"_id": favorite_id})
+        if not existing_favorite:
+            raise HTTPException(status_code=404, detail=f"Favorite with ID {favorite_id} not found")
+        
+        # Delete the favorite
+        result = await db.favorites.delete_one({"_id": favorite_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Favorite not found")
+        
+        return {"message": f"Favorite with ID {favorite_id} removed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing favorite: {str(e)}")
+
+@user_router.delete("/favorites", response_description="Remove a recipe from favorites by recipe ID", status_code=200)
+async def remove_favorite_by_recipe(user_email: str, recipe_id: str, request: Request):
+    """Remove a favorite by user email and recipe ID combination"""
+    try:
+        db = request.app.database
+        
+        # Delete the favorite
+        result = await db.favorites.delete_one({
+            "user_email": user_email,
+            "recipe_id": recipe_id
+        })
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Favorite not found")
+        
+        return {"message": f"Favorite for recipe {recipe_id} removed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing favorite: {str(e)}")
+
+@user_router.get("/favorites/schema", response_description="Get the schema for Favorite model", status_code=200)
+async def get_favorite_schema():
+    """Returns the JSON schema for the Favorite model for debugging purposes"""
+    try:
+        schema = Favorite.schema()
+        # Add field details for diagnostics
+        fields = {}
+        for field_name, field in Favorite.__fields__.items():
+            fields[field_name] = {
+                "type": str(field.type_),
+                "required": field.required,
+                "default": str(field.default) if field.default is not None else None
+            }
+        
+        return {
+            "schema": schema,
+            "field_details": fields
+        }
+    except Exception as e:
+        print(f"Error getting schema: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting schema: {str(e)}")

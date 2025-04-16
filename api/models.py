@@ -191,3 +191,43 @@ class MealPlanGenerationRequest(BaseModel):
     max_sugar: float = Field(..., description="Maximum sugar per meal in grams")
     max_sodium: float = Field(..., description="Maximum sodium per meal in mg")
     days: int = Field(..., description="Number of days to plan for (1-7)")
+
+class Favorite(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    user_email: EmailStr
+    recipe_id: str
+    name: str
+    images: List[str] = Field(default_factory=list)
+    category: str
+    rating: Optional[str] = None
+    prepTime: Optional[str] = None
+    cookTime: Optional[str] = None
+    protein: Optional[str] = None
+    carbs: Optional[str] = None
+    fat: Optional[str] = None
+    instructions: List[str] = Field(default_factory=list)
+    ingredients: List[str] = Field(default_factory=list)
+    url: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": "abcd-efgh-jklm-nopq-rstuv",
+                "user_email": "user@example.com",
+                "recipe_id": "recipe123",
+                "name": "Chocolate Cake",
+                "images": ["https://example.com/cake.jpg"],
+                "category": "Dessert",
+                "rating": "5",
+                "prepTime": "30 mins",
+                "cookTime": "45 mins",
+                "protein": "5",
+                "carbs": "40",
+                "fat": "10",
+                "instructions": ["Mix ingredients", "Bake at 350°F"],
+                "ingredients": ["Flour", "Sugar", "Cocoa"],
+                "url": "http://localhost:3000/recipe-details/recipe123",
+                "created_at": "2023-04-22T10:30:00Z"
+            }
+        }

@@ -19,6 +19,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import axios from 'axios';
 // Import images from the photos directory
 import first from './photos/first.jpg';
 import second from './photos/second.jpg';
@@ -63,13 +64,37 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [favoriteRecipes, setFavoriteRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Get user email from localStorage (set during login)
+  const userEmail = localStorage.getItem("userEmail");
 
   useEffect(() => {
-    // Load favorite recipes from localStorage
-    const savedFavorites = JSON.parse(localStorage.getItem('favorites') ?? '[]');
-    setFavoriteRecipes(savedFavorites);
-    setIsLoading(false);
-  }, []);
+    const fetchFavorites = async () => {
+      setIsLoading(true);
+      
+      try {
+        if (userEmail) {
+          // Try to get favorites from API
+          const response = await axios.get(`http://localhost:8000/user/favorites?user_email=${userEmail}`);
+          setFavoriteRecipes(response.data);
+        } else {
+          // Fall back to localStorage for users who aren't logged in
+          const savedFavorites = JSON.parse(localStorage.getItem('favorites') ?? '[]');
+          setFavoriteRecipes(savedFavorites);
+        }
+      } catch (error) {
+        console.error("Error fetching favorites:", error);
+        
+        // Fall back to localStorage if there's an error
+        const savedFavorites = JSON.parse(localStorage.getItem('favorites') ?? '[]');
+        setFavoriteRecipes(savedFavorites);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFavorites();
+  }, [userEmail]);
 
   const handleRecipeClick = (recipeId: string) => {
     navigate(`/recipe-details/${recipeId}`);
