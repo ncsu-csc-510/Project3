@@ -235,7 +235,7 @@ To set up the front end React app, do:
 
 ### Improved UI & Login
 
-![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/1.png)
+![Improved UI & Login](https://github.com/ncsu-csc-510/Project3/blob/main/media/1x.png)
 
 ---
 
